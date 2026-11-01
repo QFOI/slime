@@ -102,8 +102,10 @@ JSONL 只是带任务路径/内容摘要的 Harbor 索引；任务内容变更�
 
 ## 验证
 
+本次 [hy-stem 验收报告](validation/README.md)：真实 CLI/仿真协议矩阵 8/8 通过；真实 Gemini 完整通过 6/8，两例 DSH Lift 被上游 429/500 中止，单并发重试仍无可用供应商账号。失败证据与成功证据一并保留。
+
 ```bash
-python -m pytest tests/test_robotics tests/test_agent/test_harness.py -q
+python -m pytest tests/test_robotics tests/test_agent/test_harness.py tests/test_agent/test_sandbox_exec_and_wait.py -q
 python -m tests.test_robotics.smoke --provider openai
 python -m tests.test_robotics.smoke --provider anthropic
 python -m tests.test_robotics.boundaries

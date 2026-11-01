@@ -1,0 +1,1716 @@
+{
+  "date_utc": "2026-11-01",
+  "implementation_commit": "52a96bef82ce755066c903c2ab0e1d0b1a6876f3",
+  "upstream_slime": "540ea919e45b8b929198abce008a103be9cfc779",
+  "robot_rollout_commit": "addbad62ac202332aad8b14eb10ea481a0402936",
+  "runtime_image_id": "sha256:f0c6624163681d6e218de871112871833986bcdab4cee608c84235741c481e72",
+  "versions": {
+    "robot-rollout": "0.5.1",
+    "torch": "2.6.0+cpu",
+    "robosuite": "1.5.2",
+    "mujoco": "3.3.0",
+    "numpy": "1.26.4",
+    "litellm": "1.90.0",
+    "mcp": "1.30.0",
+    "pydantic": "2.14.2"
+  },
+  "protocol_model": "deterministic-public-pose-controller; not an LLM capability evaluation",
+  "protocol_cases": [
+    {
+      "provider": "openai",
+      "trial_id": "ba9edc3b2e154b538c3fd3082199c5c1",
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "cc",
+      "profile": "intuitive",
+      "status": "completed",
+      "reward": 1.0,
+      "rewards": {
+        "reward": 1.0,
+        "physical_success": 1.0,
+        "depth_programs": 0.0
+      },
+      "agent_metrics": {
+        "compact_count": 0,
+        "compact_attempts": 0,
+        "compact_limit_reached": 0
+      },
+      "model_requests": 3,
+      "elapsed_sec": 12.148,
+      "cc_version": "2.1.296 (Claude Code)",
+      "observed_api_image_blocks": 6,
+      "test_model": "deterministic-public-pose-controller",
+      "physical_evidence": {
+        "task": "reach_pose",
+        "seed": 17,
+        "simulator": "robosuite Lift / MuJoCo 3.3.0",
+        "success": true,
+        "native_lift_success": false,
+        "hold_samples": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "hold_duration_sec": 0.5,
+        "cube_world_position": [
+          -0.002282525427968151,
+          0.004020216973637553,
+          0.8208999782542973
+        ],
+        "tcp_pose": {
+          "position_m": [
+            0.5171180985955373,
+            -0.03999289502642163,
+            0.14891474724407694
+          ],
+          "quaternion_wxyz": [
+            0.04090519786831449,
+            0.6389342706240579,
+            0.766618923944705,
+            0.04883838714904217
+          ]
+        },
+        "servo_steps": 57,
+        "simulated_sec": 2.8499999999999077,
+        "reach_goal": {
+          "position_m": [
+            0.5172317061010185,
+            -0.04,
+            0.14904387158518811
+          ],
+          "quaternion_wxyz": [
+            0.04074825866060432,
+            0.639206093686535,
+            0.7664025947633316,
+            0.04880790868457476
+          ]
+        },
+        "observation_id": "ee25c9d4405e4b3e:obs-3",
+        "physical_commands": 1
+      },
+      "robot_event_counts": {
+        "observation": 3,
+        "command_start": 1,
+        "command_end": 1
+      },
+      "python_programs": [],
+      "upstream_image_blocks": 6,
+      "gateway_error_events": {}
+    },
+    {
+      "provider": "openai",
+      "trial_id": "4eaeb74e2c7840abaef3c8a12e736bca",
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "cc",
+      "profile": "expert",
+      "status": "completed",
+      "reward": 1.0,
+      "rewards": {
+        "reward": 1.0,
+        "physical_success": 1.0,
+        "depth_programs": 1.0
+      },
+      "agent_metrics": {
+        "compact_count": 0,
+        "compact_attempts": 0,
+        "compact_limit_reached": 0
+      },
+      "model_requests": 4,
+      "elapsed_sec": 13.378,
+      "cc_version": "2.1.296 (Claude Code)",
+      "observed_api_image_blocks": 8,
+      "test_model": "deterministic-public-pose-controller",
+      "physical_evidence": {
+        "task": "reach_pose",
+        "seed": 17,
+        "simulator": "robosuite Lift / MuJoCo 3.3.0",
+        "success": true,
+        "native_lift_success": false,
+        "hold_samples": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "hold_duration_sec": 0.5,
+        "cube_world_position": [
+          -0.002282525427968151,
+          0.004020216973637553,
+          0.8208999782542973
+        ],
+        "tcp_pose": {
+          "position_m": [
+            0.5171180985955373,
+            -0.03999289502642163,
+            0.14891474724407694
+          ],
+          "quaternion_wxyz": [
+            0.04090519786831449,
+            0.6389342706240579,
+            0.766618923944705,
+            0.04883838714904217
+          ]
+        },
+        "servo_steps": 57,
+        "simulated_sec": 2.8499999999999077,
+        "reach_goal": {
+          "position_m": [
+            0.5172317061010185,
+            -0.04,
+            0.14904387158518811
+          ],
+          "quaternion_wxyz": [
+            0.04074825866060432,
+            0.639206093686535,
+            0.7664025947633316,
+            0.04880790868457476
+          ]
+        },
+        "observation_id": "e40621eef1a04efe:obs-3",
+        "physical_commands": 1
+      },
+      "robot_event_counts": {
+        "observation": 3,
+        "python_start": 1,
+        "python_end": 1,
+        "command_start": 1,
+        "command_end": 1
+      },
+      "python_programs": [
+        "depth = artifacts.load(observation['artifacts'][0]['depth']['artifact_id'])\nresult = {'depth_median_m': float(np.median(depth[np.isfinite(depth) & (depth > 0)]))}"
+      ],
+      "upstream_image_blocks": 8,
+      "gateway_error_events": {}
+    },
+    {
+      "provider": "openai",
+      "trial_id": "8d3cd5968f8e49168afce104a54ec983",
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "dsh",
+      "profile": "intuitive",
+      "status": "completed",
+      "reward": 1.0,
+      "rewards": {
+        "reward": 1.0,
+        "physical_success": 1.0,
+        "depth_programs": 0.0
+      },
+      "agent_metrics": {
+        "completed": 1,
+        "ptc_subcalls": 0,
+        "ptc_successful_subcalls": 0
+      },
+      "model_requests": 3,
+      "elapsed_sec": 80.448,
+      "dsh_versions": {
+        "dsh": "0.1.0-rc.6",
+        "dsh-acp": "0.1.0-rc.6",
+        "verified_dsh_packages": 187,
+        "package_lock_sha256": "8bb1b6852a4b994cbd7e3a643c879cdc7c982f99119f0e2b0265fc42f5e85a17"
+      },
+      "observed_api_image_blocks": 6,
+      "test_model": "deterministic-public-pose-controller",
+      "physical_evidence": {
+        "task": "reach_pose",
+        "seed": 17,
+        "simulator": "robosuite Lift / MuJoCo 3.3.0",
+        "success": true,
+        "native_lift_success": false,
+        "hold_samples": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "hold_duration_sec": 0.5,
+        "cube_world_position": [
+          -0.002282525427968151,
+          0.004020216973637553,
+          0.8208999782542973
+        ],
+        "tcp_pose": {
+          "position_m": [
+            0.5171180985955373,
+            -0.03999289502642163,
+            0.14891474724407694
+          ],
+          "quaternion_wxyz": [
+            0.04090519786831449,
+            0.6389342706240579,
+            0.766618923944705,
+            0.04883838714904217
+          ]
+        },
+        "servo_steps": 57,
+        "simulated_sec": 2.8499999999999077,
+        "reach_goal": {
+          "position_m": [
+            0.5172317061010185,
+            -0.04,
+            0.14904387158518811
+          ],
+          "quaternion_wxyz": [
+            0.04074825866060432,
+            0.639206093686535,
+            0.7664025947633316,
+            0.04880790868457476
+          ]
+        },
+        "observation_id": "b6d2631e0d8b4aba:obs-3",
+        "physical_commands": 1
+      },
+      "robot_event_counts": {
+        "observation": 3,
+        "command_start": 1,
+        "command_end": 1
+      },
+      "python_programs": [],
+      "upstream_image_blocks": 6,
+      "gateway_error_events": {}
+    },
+    {
+      "provider": "openai",
+      "trial_id": "a0f7d40c944c4b10920d5bbd9dc75830",
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "dsh",
+      "profile": "expert",
+      "status": "completed",
+      "reward": 1.0,
+      "rewards": {
+        "reward": 1.0,
+        "physical_success": 1.0,
+        "depth_programs": 1.0
+      },
+      "agent_metrics": {
+        "completed": 1,
+        "ptc_subcalls": 3,
+        "ptc_successful_subcalls": 3
+      },
+      "model_requests": 4,
+      "elapsed_sec": 86.903,
+      "dsh_versions": {
+        "dsh": "0.1.0-rc.6",
+        "dsh-acp": "0.1.0-rc.6",
+        "verified_dsh_packages": 187,
+        "package_lock_sha256": "8bb1b6852a4b994cbd7e3a643c879cdc7c982f99119f0e2b0265fc42f5e85a17"
+      },
+      "observed_api_image_blocks": 8,
+      "test_model": "deterministic-public-pose-controller",
+      "physical_evidence": {
+        "task": "reach_pose",
+        "seed": 17,
+        "simulator": "robosuite Lift / MuJoCo 3.3.0",
+        "success": true,
+        "native_lift_success": false,
+        "hold_samples": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "hold_duration_sec": 0.5,
+        "cube_world_position": [
+          -0.002282525427968151,
+          0.004020216973637553,
+          0.8208999782542973
+        ],
+        "tcp_pose": {
+          "position_m": [
+            0.5171180985955373,
+            -0.03999289502642163,
+            0.14891474724407694
+          ],
+          "quaternion_wxyz": [
+            0.04090519786831449,
+            0.6389342706240579,
+            0.766618923944705,
+            0.04883838714904217
+          ]
+        },
+        "servo_steps": 57,
+        "simulated_sec": 2.8499999999999077,
+        "reach_goal": {
+          "position_m": [
+            0.5172317061010185,
+            -0.04,
+            0.14904387158518811
+          ],
+          "quaternion_wxyz": [
+            0.04074825866060432,
+            0.639206093686535,
+            0.7664025947633316,
+            0.04880790868457476
+          ]
+        },
+        "observation_id": "acfd7e8cace9410d:obs-3",
+        "physical_commands": 1
+      },
+      "robot_event_counts": {
+        "observation": 3,
+        "python_start": 1,
+        "python_end": 1,
+        "command_start": 1,
+        "command_end": 1
+      },
+      "python_programs": [
+        "depth = artifacts.load(observation['artifacts'][0]['depth']['artifact_id'])\nresult = {'depth_median_m': float(np.median(depth[np.isfinite(depth) & (depth > 0)]))}"
+      ],
+      "upstream_image_blocks": 8,
+      "gateway_error_events": {}
+    },
+    {
+      "provider": "anthropic",
+      "trial_id": "2a8fc6336d5a45238f8d9ae28fb9a25d",
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "cc",
+      "profile": "intuitive",
+      "status": "completed",
+      "reward": 1.0,
+      "rewards": {
+        "reward": 1.0,
+        "physical_success": 1.0,
+        "depth_programs": 0.0
+      },
+      "agent_metrics": {
+        "compact_count": 0,
+        "compact_attempts": 0,
+        "compact_limit_reached": 0
+      },
+      "model_requests": 3,
+      "elapsed_sec": 11.747,
+      "cc_version": "2.1.296 (Claude Code)",
+      "observed_api_image_blocks": 6,
+      "test_model": "deterministic-public-pose-controller",
+      "physical_evidence": {
+        "task": "reach_pose",
+        "seed": 17,
+        "simulator": "robosuite Lift / MuJoCo 3.3.0",
+        "success": true,
+        "native_lift_success": false,
+        "hold_samples": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "hold_duration_sec": 0.5,
+        "cube_world_position": [
+          -0.002282525427968151,
+          0.004020216973637553,
+          0.8208999782542973
+        ],
+        "tcp_pose": {
+          "position_m": [
+            0.5171180985955373,
+            -0.03999289502642163,
+            0.14891474724407694
+          ],
+          "quaternion_wxyz": [
+            0.04090519786831449,
+            0.6389342706240579,
+            0.766618923944705,
+            0.04883838714904217
+          ]
+        },
+        "servo_steps": 57,
+        "simulated_sec": 2.8499999999999077,
+        "reach_goal": {
+          "position_m": [
+            0.5172317061010185,
+            -0.04,
+            0.14904387158518811
+          ],
+          "quaternion_wxyz": [
+            0.04074825866060432,
+            0.639206093686535,
+            0.7664025947633316,
+            0.04880790868457476
+          ]
+        },
+        "observation_id": "448a141dc211404c:obs-3",
+        "physical_commands": 1
+      },
+      "robot_event_counts": {
+        "observation": 3,
+        "command_start": 1,
+        "command_end": 1
+      },
+      "python_programs": [],
+      "upstream_image_blocks": 0,
+      "gateway_error_events": {}
+    },
+    {
+      "provider": "anthropic",
+      "trial_id": "b4986d42a4f94bacaf5d9b3a3e22ec20",
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "cc",
+      "profile": "expert",
+      "status": "completed",
+      "reward": 1.0,
+      "rewards": {
+        "reward": 1.0,
+        "physical_success": 1.0,
+        "depth_programs": 1.0
+      },
+      "agent_metrics": {
+        "compact_count": 0,
+        "compact_attempts": 0,
+        "compact_limit_reached": 0
+      },
+      "model_requests": 4,
+      "elapsed_sec": 13.54,
+      "cc_version": "2.1.296 (Claude Code)",
+      "observed_api_image_blocks": 8,
+      "test_model": "deterministic-public-pose-controller",
+      "physical_evidence": {
+        "task": "reach_pose",
+        "seed": 17,
+        "simulator": "robosuite Lift / MuJoCo 3.3.0",
+        "success": true,
+        "native_lift_success": false,
+        "hold_samples": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "hold_duration_sec": 0.5,
+        "cube_world_position": [
+          -0.002282525427968151,
+          0.004020216973637553,
+          0.8208999782542973
+        ],
+        "tcp_pose": {
+          "position_m": [
+            0.5171180985955373,
+            -0.03999289502642163,
+            0.14891474724407694
+          ],
+          "quaternion_wxyz": [
+            0.04090519786831449,
+            0.6389342706240579,
+            0.766618923944705,
+            0.04883838714904217
+          ]
+        },
+        "servo_steps": 57,
+        "simulated_sec": 2.8499999999999077,
+        "reach_goal": {
+          "position_m": [
+            0.5172317061010185,
+            -0.04,
+            0.14904387158518811
+          ],
+          "quaternion_wxyz": [
+            0.04074825866060432,
+            0.639206093686535,
+            0.7664025947633316,
+            0.04880790868457476
+          ]
+        },
+        "observation_id": "c50b2caa57d741b8:obs-3",
+        "physical_commands": 1
+      },
+      "robot_event_counts": {
+        "observation": 3,
+        "python_start": 1,
+        "python_end": 1,
+        "command_start": 1,
+        "command_end": 1
+      },
+      "python_programs": [
+        "depth = artifacts.load(observation['artifacts'][0]['depth']['artifact_id'])\nresult = {'depth_median_m': float(np.median(depth[np.isfinite(depth) & (depth > 0)]))}"
+      ],
+      "upstream_image_blocks": 0,
+      "gateway_error_events": {}
+    },
+    {
+      "provider": "anthropic",
+      "trial_id": "abe3c0980e1448e9a95ff8096d46317e",
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "dsh",
+      "profile": "intuitive",
+      "status": "completed",
+      "reward": 1.0,
+      "rewards": {
+        "reward": 1.0,
+        "physical_success": 1.0,
+        "depth_programs": 0.0
+      },
+      "agent_metrics": {
+        "completed": 1,
+        "ptc_subcalls": 0,
+        "ptc_successful_subcalls": 0
+      },
+      "model_requests": 3,
+      "elapsed_sec": 80.694,
+      "dsh_versions": {
+        "dsh": "0.1.0-rc.6",
+        "dsh-acp": "0.1.0-rc.6",
+        "verified_dsh_packages": 187,
+        "package_lock_sha256": "8bb1b6852a4b994cbd7e3a643c879cdc7c982f99119f0e2b0265fc42f5e85a17"
+      },
+      "observed_api_image_blocks": 6,
+      "test_model": "deterministic-public-pose-controller",
+      "physical_evidence": {
+        "task": "reach_pose",
+        "seed": 17,
+        "simulator": "robosuite Lift / MuJoCo 3.3.0",
+        "success": true,
+        "native_lift_success": false,
+        "hold_samples": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "hold_duration_sec": 0.5,
+        "cube_world_position": [
+          -0.002282525427968151,
+          0.004020216973637553,
+          0.8208999782542973
+        ],
+        "tcp_pose": {
+          "position_m": [
+            0.5171180985955373,
+            -0.03999289502642163,
+            0.14891474724407694
+          ],
+          "quaternion_wxyz": [
+            0.04090519786831449,
+            0.6389342706240579,
+            0.766618923944705,
+            0.04883838714904217
+          ]
+        },
+        "servo_steps": 57,
+        "simulated_sec": 2.8499999999999077,
+        "reach_goal": {
+          "position_m": [
+            0.5172317061010185,
+            -0.04,
+            0.14904387158518811
+          ],
+          "quaternion_wxyz": [
+            0.04074825866060432,
+            0.639206093686535,
+            0.7664025947633316,
+            0.04880790868457476
+          ]
+        },
+        "observation_id": "a3871bebaa3b472f:obs-3",
+        "physical_commands": 1
+      },
+      "robot_event_counts": {
+        "observation": 3,
+        "command_start": 1,
+        "command_end": 1
+      },
+      "python_programs": [],
+      "upstream_image_blocks": 6,
+      "gateway_error_events": {}
+    },
+    {
+      "provider": "anthropic",
+      "trial_id": "7d1c6bd6ace44decad7449faa977680f",
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "dsh",
+      "profile": "expert",
+      "status": "completed",
+      "reward": 1.0,
+      "rewards": {
+        "reward": 1.0,
+        "physical_success": 1.0,
+        "depth_programs": 1.0
+      },
+      "agent_metrics": {
+        "completed": 1,
+        "ptc_subcalls": 3,
+        "ptc_successful_subcalls": 3
+      },
+      "model_requests": 4,
+      "elapsed_sec": 86.71,
+      "dsh_versions": {
+        "dsh": "0.1.0-rc.6",
+        "dsh-acp": "0.1.0-rc.6",
+        "verified_dsh_packages": 187,
+        "package_lock_sha256": "8bb1b6852a4b994cbd7e3a643c879cdc7c982f99119f0e2b0265fc42f5e85a17"
+      },
+      "observed_api_image_blocks": 8,
+      "test_model": "deterministic-public-pose-controller",
+      "physical_evidence": {
+        "task": "reach_pose",
+        "seed": 17,
+        "simulator": "robosuite Lift / MuJoCo 3.3.0",
+        "success": true,
+        "native_lift_success": false,
+        "hold_samples": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "hold_duration_sec": 0.5,
+        "cube_world_position": [
+          -0.002282525427968151,
+          0.004020216973637553,
+          0.8208999782542973
+        ],
+        "tcp_pose": {
+          "position_m": [
+            0.5171180985955373,
+            -0.03999289502642163,
+            0.14891474724407694
+          ],
+          "quaternion_wxyz": [
+            0.04090519786831449,
+            0.6389342706240579,
+            0.766618923944705,
+            0.04883838714904217
+          ]
+        },
+        "servo_steps": 57,
+        "simulated_sec": 2.8499999999999077,
+        "reach_goal": {
+          "position_m": [
+            0.5172317061010185,
+            -0.04,
+            0.14904387158518811
+          ],
+          "quaternion_wxyz": [
+            0.04074825866060432,
+            0.639206093686535,
+            0.7664025947633316,
+            0.04880790868457476
+          ]
+        },
+        "observation_id": "ed8b8783492c4dde:obs-3",
+        "physical_commands": 1
+      },
+      "robot_event_counts": {
+        "observation": 3,
+        "python_start": 1,
+        "python_end": 1,
+        "command_start": 1,
+        "command_end": 1
+      },
+      "python_programs": [
+        "depth = artifacts.load(observation['artifacts'][0]['depth']['artifact_id'])\nresult = {'depth_median_m': float(np.median(depth[np.isfinite(depth) & (depth > 0)]))}"
+      ],
+      "upstream_image_blocks": 8,
+      "gateway_error_events": {}
+    }
+  ],
+  "boundary_cases": [
+    {
+      "trial_id": "f832e22ba54142a3b07594d0e5eb9f2c",
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "cc",
+      "profile": "intuitive",
+      "status": "completed",
+      "reward": 0.0,
+      "rewards": {
+        "reward": 0.0,
+        "physical_success": 0.0,
+        "depth_programs": 0.0
+      },
+      "agent_metrics": {
+        "compact_count": 0,
+        "compact_attempts": 0,
+        "compact_limit_reached": 0
+      },
+      "model_requests": 1,
+      "elapsed_sec": 11.85,
+      "cc_version": "2.1.296 (Claude Code)",
+      "test": "no-action",
+      "physical_evidence": {
+        "task": "reach_pose",
+        "seed": 17,
+        "simulator": "robosuite Lift / MuJoCo 3.3.0",
+        "success": false,
+        "native_lift_success": false,
+        "hold_samples": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "hold_duration_sec": 0.5,
+        "cube_world_position": [
+          -0.002282525427968151,
+          0.004020216973637553,
+          0.8208980178860535
+        ],
+        "tcp_pose": {
+          "position_m": [
+            0.4572317061010187,
+            -4.634741844857884e-12,
+            0.09904387158518901
+          ],
+          "quaternion_wxyz": [
+            0.04497012360108676,
+            0.7055022092871946,
+            0.705849842499702,
+            0.04494797567562292
+          ]
+        },
+        "servo_steps": 12,
+        "simulated_sec": 0.6000000000000004,
+        "reach_goal": {
+          "position_m": [
+            0.5172317061010185,
+            -0.04,
+            0.14904387158518811
+          ],
+          "quaternion_wxyz": [
+            0.04074825866060432,
+            0.639206093686535,
+            0.7664025947633316,
+            0.04880790868457476
+          ]
+        },
+        "observation_id": "c80fa1527e67413a:obs-1",
+        "physical_commands": 0
+      },
+      "robot_event_counts": {
+        "observation": 1
+      },
+      "python_programs": [],
+      "upstream_image_blocks": 0,
+      "gateway_error_events": {}
+    },
+    {
+      "trial_id": "7014dd40c71e4ef289c75e44a1a154f2",
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "cc",
+      "profile": "intuitive",
+      "status": "truncated",
+      "reward": 0.0,
+      "rewards": {
+        "reward": 0.0,
+        "physical_success": 0.0,
+        "depth_programs": 0.0
+      },
+      "agent_metrics": {
+        "compact_count": 0,
+        "compact_attempts": 0,
+        "compact_limit_reached": 1
+      },
+      "model_requests": 1,
+      "elapsed_sec": 11.925,
+      "cc_version": "2.1.296 (Claude Code)",
+      "test": "compaction-stop",
+      "physical_evidence": {
+        "task": "reach_pose",
+        "seed": 17,
+        "simulator": "robosuite Lift / MuJoCo 3.3.0",
+        "success": false,
+        "native_lift_success": false,
+        "hold_samples": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "hold_duration_sec": 0.5,
+        "cube_world_position": [
+          -0.002282525427968151,
+          0.004020216973637553,
+          0.8208980178860535
+        ],
+        "tcp_pose": {
+          "position_m": [
+            0.4572317061010187,
+            -4.634741844857884e-12,
+            0.09904387158518901
+          ],
+          "quaternion_wxyz": [
+            0.04497012360108676,
+            0.7055022092871946,
+            0.705849842499702,
+            0.04494797567562292
+          ]
+        },
+        "servo_steps": 12,
+        "simulated_sec": 0.6000000000000004,
+        "reach_goal": {
+          "position_m": [
+            0.5172317061010185,
+            -0.04,
+            0.14904387158518811
+          ],
+          "quaternion_wxyz": [
+            0.04074825866060432,
+            0.639206093686535,
+            0.7664025947633316,
+            0.04880790868457476
+          ]
+        },
+        "observation_id": "343df9a832f34992:obs-2",
+        "physical_commands": 0
+      },
+      "robot_event_counts": {
+        "observation": 2
+      },
+      "python_programs": [],
+      "upstream_image_blocks": 0,
+      "gateway_error_events": {}
+    }
+  ],
+  "live_model": "gemini/gemini-4-argon (AIHub alias; upstream weight snapshot unavailable)",
+  "live_config": {
+    "temperature": 0.2,
+    "repeats": 1,
+    "seed": 17,
+    "concurrency": 2
+  },
+  "retry_config": {
+    "concurrency": 1,
+    "changed_prompt_or_tool_policy": false
+  },
+  "superseded_live_attempts": [
+    {
+      "trial_id": "8e491f875bc94486819066b0a589a9e7",
+      "task": "panda-lift",
+      "task_digest": "7886c323626723149316a255bc408b1e124f6ab2a080557916dc17241165466e",
+      "agent": "dsh",
+      "profile": "intuitive",
+      "status": "aborted",
+      "agent_metrics": {
+        "completed": 0,
+        "ptc_subcalls": 0,
+        "ptc_successful_subcalls": 0
+      },
+      "model_requests": 7,
+      "elapsed_sec": 158.626,
+      "error": "RuntimeError: Agent execution failed with exit 1",
+      "upstream_failure": "HTTP 429 RESOURCE_EXHAUSTED; upstream retries exhausted",
+      "physical_evidence": {
+        "task": "lift",
+        "seed": 17,
+        "simulator": "robosuite Lift / MuJoCo 3.3.0",
+        "success": false,
+        "native_lift_success": false,
+        "hold_samples": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "hold_duration_sec": 0.5,
+        "cube_world_position": [
+          -0.002282525427968151,
+          0.004020216973637553,
+          0.8208980178860535
+        ],
+        "tcp_pose": {
+          "position_m": [
+            0.4572317061010187,
+            -4.634741844857884e-12,
+            0.09904387158518901
+          ],
+          "quaternion_wxyz": [
+            0.04497012360108676,
+            0.7055022092871946,
+            0.705849842499702,
+            0.04494797567562292
+          ]
+        },
+        "servo_steps": 12,
+        "simulated_sec": 0.6000000000000004,
+        "reach_goal": null,
+        "observation_id": "d90ed5a8d94440f1:obs-2",
+        "physical_commands": 0
+      },
+      "robot_event_counts": {
+        "observation": 2,
+        "tool_error": 1
+      },
+      "python_programs": [],
+      "upstream_image_blocks": 10,
+      "gateway_error_events": {
+        "upstream_error": 3
+      }
+    }
+  ],
+  "live_cases": [
+    {
+      "trial_id": "7d7a26a2ceb64a299382186b02dee1eb",
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "cc",
+      "profile": "intuitive",
+      "status": "completed",
+      "reward": 1.0,
+      "rewards": {
+        "reward": 1.0,
+        "physical_success": 1.0,
+        "depth_programs": 0.0
+      },
+      "agent_metrics": {
+        "compact_count": 0,
+        "compact_attempts": 0,
+        "compact_limit_reached": 0
+      },
+      "model_requests": 6,
+      "elapsed_sec": 164.224,
+      "cc_version": "2.1.296 (Claude Code)",
+      "physical_evidence": {
+        "task": "reach_pose",
+        "seed": 17,
+        "simulator": "robosuite Lift / MuJoCo 3.3.0",
+        "success": true,
+        "native_lift_success": false,
+        "hold_samples": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "hold_duration_sec": 0.5,
+        "cube_world_position": [
+          -0.002282525427968151,
+          0.004020216973637553,
+          0.8208999782542973
+        ],
+        "tcp_pose": {
+          "position_m": [
+            0.5171432465396177,
+            -0.04017459692571862,
+            0.1489500995917511
+          ],
+          "quaternion_wxyz": [
+            0.040835893666513155,
+            0.6390514641957211,
+            0.7665124818545248,
+            0.04903336679220362
+          ]
+        },
+        "servo_steps": 147,
+        "simulated_sec": 7.349999999999413,
+        "reach_goal": {
+          "position_m": [
+            0.5172317061010185,
+            -0.04,
+            0.14904387158518811
+          ],
+          "quaternion_wxyz": [
+            0.04074825866060432,
+            0.639206093686535,
+            0.7664025947633316,
+            0.04880790868457476
+          ]
+        },
+        "observation_id": "aa003c6ba5074f40:obs-5",
+        "physical_commands": 3
+      },
+      "robot_event_counts": {
+        "observation": 5,
+        "command_start": 3,
+        "command_end": 3
+      },
+      "python_programs": [],
+      "upstream_image_blocks": 22,
+      "gateway_error_events": {},
+      "initial_rgb_sha256": "d4e513bccfa9e0ef3119d15f7eff66d1e41585e3e2d8e1374328585ac79d3b8d",
+      "final_rgb": {
+        "file": "panda-reach-cc-intuitive.jpg",
+        "sha256": "301c043bc29025b3d9383ee8faedae52b07a89bca3bc5e8c21d5a5a8289165ff"
+      }
+    },
+    {
+      "trial_id": "e52e296403514a29bb08de651e48511b",
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "cc",
+      "profile": "expert",
+      "status": "completed",
+      "reward": 1.0,
+      "rewards": {
+        "reward": 1.0,
+        "physical_success": 1.0,
+        "depth_programs": 1.0
+      },
+      "agent_metrics": {
+        "compact_count": 0,
+        "compact_attempts": 0,
+        "compact_limit_reached": 0
+      },
+      "model_requests": 3,
+      "elapsed_sec": 66.706,
+      "cc_version": "2.1.296 (Claude Code)",
+      "physical_evidence": {
+        "task": "reach_pose",
+        "seed": 17,
+        "simulator": "robosuite Lift / MuJoCo 3.3.0",
+        "success": true,
+        "native_lift_success": false,
+        "hold_samples": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "hold_duration_sec": 0.5,
+        "cube_world_position": [
+          -0.002282525427968151,
+          0.004020216973637553,
+          0.8208999782542973
+        ],
+        "tcp_pose": {
+          "position_m": [
+            0.5171442381119098,
+            -0.04000618814469371,
+            0.14895401881117476
+          ],
+          "quaternion_wxyz": [
+            0.04089949708707727,
+            0.6390691040612412,
+            0.7665043896889867,
+            0.04887670160619172
+          ]
+        },
+        "servo_steps": 147,
+        "simulated_sec": 7.349999999999413,
+        "reach_goal": {
+          "position_m": [
+            0.5172317061010185,
+            -0.04,
+            0.14904387158518811
+          ],
+          "quaternion_wxyz": [
+            0.04074825866060432,
+            0.639206093686535,
+            0.7664025947633316,
+            0.04880790868457476
+          ]
+        },
+        "observation_id": "b3368169a6e7475f:obs-6",
+        "physical_commands": 3
+      },
+      "robot_event_counts": {
+        "observation": 6,
+        "python_start": 1,
+        "python_tool_call": 4,
+        "command_start": 3,
+        "command_end": 3,
+        "python_end": 1
+      },
+      "python_programs": [
+        "import numpy as np\nfrom scipy.spatial.transform import Rotation as R\n\n# 1. Load and analyze current depth artifact\nobs_id = observation[\"observation_id\"]\nart_agent = [a for a in observation[\"artifacts\"] if a[\"camera\"] == \"agentview\"][0]\ndepth = artifacts.load(art_agent[\"depth\"][\"artifact_id\"])\nK = np.array(art_agent[\"calibration\"][\"K\"])\nT_bc = np.array(art_agent[\"calibration\"][\"T_base_camera\"])\n\nvalid = np.isfinite(depth) & (depth > 0.05) & (depth < 3.0)\nv_idx, u_idx = np.where(valid)\nz = depth[valid]\nx_cam = (u_idx - K[0, 2]) * z / K[0, 0]\ny_cam = (v_idx - K[1, 2]) * z / K[1, 1]\npts_cam = np.stack([x_cam, y_cam, z, np.ones_like(z)], axis=0)\npts_base = (T_bc @ pts_cam)[:3].T\n\ngoal_pos = np.array(observation[\"task\"][\"goal_tcp_pose\"][\"position_m\"])\ngoal_quat_wxyz = np.array(observation[\"task\"][\"goal_tcp_pose\"][\"quaternion_wxyz\"])\n\ndists_to_goal = np.linalg.norm(pts_base - goal_pos, axis=1)\nmin_clearance_m = float(np.min(dists_to_goal))\n\ndef quat_wxyz_to_rot(q):\n    return R.from_quat([q[1], q[2], q[3], q[0]])\n\ndef pose_errors(state_tcp):\n    pos = np.array(state_tcp[\"position_m\"])\n    quat = np.array(state_tcp[\"quaternion_wxyz\"])\n    pos_err = goal_pos - pos\n    r_curr = quat_wxyz_to_rot(quat)\n    r_goal = quat_wxyz_to_rot(goal_quat_wxyz)\n    # base frame rotation delta: r_goal = r_delta * r_curr => r_delta = r_goal * r_curr.inv()\n    r_delta = r_goal * r_curr.inv()\n    rot_vec = r_delta.as_rotvec()\n    return pos_err, rot_vec, float(np.linalg.norm(pos_err)), float(np.linalg.norm(rot_vec))\n\n# Execute move_pose to reach goal_tcp_pose and refine / hold\ncur_state = observation[\"state\"][\"tcp_pose\"]\nsteps_log = []\n\nfor i in range(3):\n    pos_err, rot_vec, p_norm, r_norm = pose_errors(cur_state)\n    res = robot.call(\"move_pose\", {\n        \"observation_id\": obs_id,\n        \"command_id\": f\"move_pose_goal_{i}\",\n        \"note\": f\"Move to goal pose step {i}\",\n        \"target_pose_base\": {\n            \"position_m\": goal_pos.tolist(),\n            \"quaternion_wxyz\": goal_quat_wxyz.tolist()\n        }\n    })\n    obs_id = res[\"observation_id\"]\n    cur_state = res[\"state\"][\"tcp_pose\"]\n    p_err_after, r_vec_after, p_norm_after, r_norm_after = pose_errors(cur_state)\n    steps_log.append({\n        \"step\": i,\n        \"receipt_status\": res[\"receipt\"][\"status\"],\n        \"pos_err_m\": p_norm_after,\n        \"rot_err_rad\": r_norm_after,\n        \"sim_time\": res[\"state\"][\"timestamp\"][\"simulation_sec\"]\n    })\n    if res[\"receipt\"][\"status\"] not in (\"completed\", \"holding\"):\n        break\n\n# Final observe to get visual confirmation\nfinal_obs = robot.call(\"observe\", {\"cameras\": [\"agentview\", \"birdview\"]})\nobs_id = final_obs[\"observation_id\"]\nfinal_p_err, final_r_vec, final_p_norm, final_r_norm = pose_errors(final_obs[\"state\"][\"tcp_pose\"])\n\nresult = {\n    \"depth_valid_points\": int(np.sum(valid)),\n    \"min_scene_clearance_to_goal_m\": min_clearance_m,\n    \"steps\": steps_log,\n    \"final_pos_error_m\": final_p_norm,\n    \"final_rot_error_rad\": final_r_norm,\n    \"final_tcp_pose\": final_obs[\"state\"][\"tcp_pose\"],\n    \"final_sim_sec\": final_obs[\"state\"][\"timestamp\"][\"simulation_sec\"]\n}\n"
+      ],
+      "upstream_image_blocks": 6,
+      "gateway_error_events": {},
+      "initial_rgb_sha256": "d4e513bccfa9e0ef3119d15f7eff66d1e41585e3e2d8e1374328585ac79d3b8d",
+      "final_rgb": {
+        "file": "panda-reach-cc-expert.jpg",
+        "sha256": "cc32be1c067435237fd7c0dae5c978539051b7f99e033158d4354ab7977f4bab"
+      }
+    },
+    {
+      "trial_id": "a78ba85006214a5ba5147ddecb8485e7",
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "dsh",
+      "profile": "intuitive",
+      "status": "completed",
+      "reward": 1.0,
+      "rewards": {
+        "reward": 1.0,
+        "physical_success": 1.0,
+        "depth_programs": 0.0
+      },
+      "agent_metrics": {
+        "completed": 1,
+        "ptc_subcalls": 0,
+        "ptc_successful_subcalls": 0
+      },
+      "model_requests": 6,
+      "elapsed_sec": 166.053,
+      "dsh_versions": {
+        "dsh": "0.1.0-rc.6",
+        "dsh-acp": "0.1.0-rc.6",
+        "verified_dsh_packages": 187,
+        "package_lock_sha256": "8bb1b6852a4b994cbd7e3a643c879cdc7c982f99119f0e2b0265fc42f5e85a17"
+      },
+      "physical_evidence": {
+        "task": "reach_pose",
+        "seed": 17,
+        "simulator": "robosuite Lift / MuJoCo 3.3.0",
+        "success": true,
+        "native_lift_success": false,
+        "hold_samples": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "hold_duration_sec": 0.5,
+        "cube_world_position": [
+          -0.002282526695295992,
+          0.004020229052123237,
+          0.8208999782542998
+        ],
+        "tcp_pose": {
+          "position_m": [
+            0.5171545106349352,
+            -0.04004622780422241,
+            0.1489585373257768
+          ],
+          "quaternion_wxyz": [
+            0.04095685413151624,
+            0.6390248029023784,
+            0.7665387054906024,
+            0.04886972846269558
+          ]
+        },
+        "servo_steps": 102,
+        "simulated_sec": 5.09999999999966,
+        "reach_goal": {
+          "position_m": [
+            0.5172317061010185,
+            -0.04,
+            0.14904387158518811
+          ],
+          "quaternion_wxyz": [
+            0.04074825866060432,
+            0.639206093686535,
+            0.7664025947633316,
+            0.04880790868457476
+          ]
+        },
+        "observation_id": "4e239bcd786e4ea8:obs-4",
+        "physical_commands": 2
+      },
+      "robot_event_counts": {
+        "observation": 4,
+        "command_start": 2,
+        "command_end": 2
+      },
+      "python_programs": [],
+      "upstream_image_blocks": 16,
+      "gateway_error_events": {},
+      "initial_rgb_sha256": "d4e513bccfa9e0ef3119d15f7eff66d1e41585e3e2d8e1374328585ac79d3b8d",
+      "final_rgb": {
+        "file": "panda-reach-dsh-intuitive.jpg",
+        "sha256": "ec6f7de5dae846daace6a18a5f34ae75ef6d23c08a1ce30d9c3d68792404f25c"
+      }
+    },
+    {
+      "trial_id": "fec70c4376484947b9be5c628dbd428f",
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "dsh",
+      "profile": "expert",
+      "status": "completed",
+      "reward": 1.0,
+      "rewards": {
+        "reward": 1.0,
+        "physical_success": 1.0,
+        "depth_programs": 1.0
+      },
+      "agent_metrics": {
+        "completed": 1,
+        "ptc_subcalls": 3,
+        "ptc_successful_subcalls": 3
+      },
+      "model_requests": 3,
+      "elapsed_sec": 137.361,
+      "dsh_versions": {
+        "dsh": "0.1.0-rc.6",
+        "dsh-acp": "0.1.0-rc.6",
+        "verified_dsh_packages": 187,
+        "package_lock_sha256": "8bb1b6852a4b994cbd7e3a643c879cdc7c982f99119f0e2b0265fc42f5e85a17"
+      },
+      "physical_evidence": {
+        "task": "reach_pose",
+        "seed": 17,
+        "simulator": "robosuite Lift / MuJoCo 3.3.0",
+        "success": true,
+        "native_lift_success": false,
+        "hold_samples": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "hold_duration_sec": 0.5,
+        "cube_world_position": [
+          -0.002282525427968151,
+          0.004020216973637553,
+          0.8208999782542973
+        ],
+        "tcp_pose": {
+          "position_m": [
+            0.5171357739270162,
+            -0.04000606533820848,
+            0.14894007095756268
+          ],
+          "quaternion_wxyz": [
+            0.04090745224388267,
+            0.6390168987643869,
+            0.7665482751569046,
+            0.04886435611398252
+          ]
+        },
+        "servo_steps": 102,
+        "simulated_sec": 5.09999999999966,
+        "reach_goal": {
+          "position_m": [
+            0.5172317061010185,
+            -0.04,
+            0.14904387158518811
+          ],
+          "quaternion_wxyz": [
+            0.04074825866060432,
+            0.639206093686535,
+            0.7664025947633316,
+            0.04880790868457476
+          ]
+        },
+        "observation_id": "822c6d8448c54906:obs-5",
+        "physical_commands": 2
+      },
+      "robot_event_counts": {
+        "observation": 5,
+        "python_start": 1,
+        "python_tool_call": 4,
+        "command_start": 2,
+        "command_end": 2,
+        "python_end": 1
+      },
+      "python_programs": [
+        "\nimport scipy.spatial.transform as st\n\n# 1. Load and analyze current depth artifact from agentview\nart = observation['artifacts'][0]\ndepth = artifacts.load(art['depth']['artifact_id'])\nK = np.array(art['calibration']['K'])\nT_bc = np.array(art['calibration']['T_base_camera'])\n\nvalid = np.isfinite(depth) & (depth > 0.05) & (depth < 3.0)\nv_idx, u_idx = np.where(valid)\nz = depth[valid]\nones = np.ones_like(z)\nuv1 = np.stack([u_idx, v_idx, ones], axis=0)\npts_cam = (np.linalg.inv(K) @ uv1) * z\npts_base = (T_bc[:3, :3] @ pts_cam).T + T_bc[:3, 3]\n\n# Check points near the linear path from current TCP to goal TCP\ncur_pos = np.array(observation['state']['tcp_pose']['position_m'])\ncur_quat = np.array(observation['state']['tcp_pose']['quaternion_wxyz'])\ngoal_pose = observation['task']['goal_tcp_pose']\ngoal_pos = np.array(goal_pose['position_m'])\ngoal_quat = np.array(goal_pose['quaternion_wxyz'])\n\n# Check workspace clearance above z = 0.05 near path\nin_box = (\n    (pts_base[:, 0] > 0.35) & (pts_base[:, 0] < 0.65) &\n    (pts_base[:, 1] > -0.15) & (pts_base[:, 1] < 0.15) &\n    (pts_base[:, 2] > 0.0) & (pts_base[:, 2] < 0.25)\n)\ndepth_summary = {\n    \"valid_pixels\": int(np.sum(valid)),\n    \"min_depth_m\": float(np.min(z)),\n    \"max_depth_m\": float(np.max(z)),\n    \"pts_in_path_box\": int(np.sum(in_box)),\n    \"max_z_in_table_region\": float(np.max(pts_base[(pts_base[:,0]>0.35)&(pts_base[:,0]<0.65)&(np.abs(pts_base[:,1])<0.15)&(pts_base[:,2]<0.05), 2])) if np.any((pts_base[:,0]>0.35)&(pts_base[:,0]<0.65)&(np.abs(pts_base[:,1])<0.15)&(pts_base[:,2]<0.05)) else None\n}\n\ndef quat_wxyz_to_rot(q):\n    # scipy uses xyzw\n    return st.Rotation.from_quat([q[1], q[2], q[3], q[0]])\n\ndef pose_errors(p_cur, q_cur, p_goal, q_goal):\n    pos_err = float(np.linalg.norm(p_goal - p_cur))\n    r_cur = quat_wxyz_to_rot(q_cur)\n    r_goal = quat_wxyz_to_rot(q_goal)\n    r_diff = r_goal * r_cur.inv()\n    rot_vec = r_diff.as_rotvec()\n    rot_err = float(np.linalg.norm(rot_vec))\n    return pos_err, rot_err, p_goal - p_cur, rot_vec\n\nobs_id = observation['observation_id']\n\n# Solve IK and check\nik_res = robot.call('solve_ik', {\n    'observation_id': obs_id,\n    'target_pose_base': goal_pose\n})\n\n# Move to goal pose iteratively using move_pose / move_to until error is well below tolerance\nhistory = []\nfor step in range(4):\n    pos_err, rot_err, dp, drot = pose_errors(cur_pos, cur_quat, goal_pos, goal_quat)\n    history.append({'step': step, 'pos_err': pos_err, 'rot_err': rot_err, 'sim_sec': observation['state']['timestamp']['simulation_sec'] if step == 0 else state_now['timestamp']['simulation_sec']})\n    if pos_err < 0.002 and rot_err < 0.01:\n        break\n    mv = robot.call('move_pose', {\n        'observation_id': obs_id,\n        'command_id': f'reach_goal_{step}',\n        'note': f'Move TCP toward goal pose step {step}',\n        'target_pose_base': goal_pose\n    })\n    obs_id = mv['observation_id']\n    state_now = mv['state']\n    cur_pos = np.array(state_now['tcp_pose']['position_m'])\n    cur_quat = np.array(state_now['tcp_pose']['quaternion_wxyz'])\n\n# Hold / fine trim to ensure held for >= 0.5 simulated seconds\n# Each move_pose or move_to command runs servo steps in simulation time (~0.6s per command)\npos_err, rot_err, dp, drot = pose_errors(cur_pos, cur_quat, goal_pos, goal_quat)\nmv_hold = robot.call('move_pose', {\n    'observation_id': obs_id,\n    'command_id': 'hold_goal_pose',\n    'note': 'Hold goal pose for >= 0.5 simulated seconds',\n    'target_pose_base': goal_pose\n})\nobs_id = mv_hold['observation_id']\nstate_now = mv_hold['state']\ncur_pos = np.array(state_now['tcp_pose']['position_m'])\ncur_quat = np.array(state_now['tcp_pose']['quaternion_wxyz'])\npos_err, rot_err, dp, drot = pose_errors(cur_pos, cur_quat, goal_pos, goal_quat)\n\nfinal_obs = robot.call('observe', {})\n\nresult = {\n    'depth_summary': depth_summary,\n    'ik_converged': ik_res.get('converged'),\n    'history': history,\n    'final_pos_err_m': pos_err,\n    'final_rot_err_rad': rot_err,\n    'final_sim_sec': final_obs['state']['timestamp']['simulation_sec'],\n    'final_tcp_pose': final_obs['state']['tcp_pose'],\n    'final_obs_id': final_obs['observation_id']\n}\n"
+      ],
+      "upstream_image_blocks": 6,
+      "gateway_error_events": {},
+      "initial_rgb_sha256": "d4e513bccfa9e0ef3119d15f7eff66d1e41585e3e2d8e1374328585ac79d3b8d",
+      "final_rgb": {
+        "file": "panda-reach-dsh-expert.jpg",
+        "sha256": "ea6bb2c356511ed57e2bce589719f8845f3a199e1236a419bbf49e8d05473f5a"
+      }
+    },
+    {
+      "trial_id": "d29b0ecac0794db6bee89846040f3ce0",
+      "task": "panda-lift",
+      "task_digest": "7886c323626723149316a255bc408b1e124f6ab2a080557916dc17241165466e",
+      "agent": "cc",
+      "profile": "intuitive",
+      "status": "completed",
+      "reward": 1.0,
+      "rewards": {
+        "reward": 1.0,
+        "physical_success": 1.0,
+        "depth_programs": 0.0
+      },
+      "agent_metrics": {
+        "compact_count": 0,
+        "compact_attempts": 0,
+        "compact_limit_reached": 0
+      },
+      "model_requests": 17,
+      "elapsed_sec": 254.569,
+      "cc_version": "2.1.296 (Claude Code)",
+      "physical_evidence": {
+        "task": "lift",
+        "seed": 17,
+        "simulator": "robosuite Lift / MuJoCo 3.3.0",
+        "success": true,
+        "native_lift_success": true,
+        "hold_samples": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "hold_duration_sec": 0.5,
+        "cube_world_position": [
+          -0.0016490622051581443,
+          0.008429509047135979,
+          0.9598355653508212
+        ],
+        "tcp_pose": {
+          "position_m": [
+            0.5769270499508907,
+            0.003662715705583676,
+            0.04164671828726618
+          ],
+          "quaternion_wxyz": [
+            0.050090181055101914,
+            0.7907856323264921,
+            0.6088334864027605,
+            0.03835157496787999
+          ]
+        },
+        "servo_steps": 352,
+        "simulated_sec": 17.600000000001124,
+        "reach_goal": null,
+        "observation_id": "a7fac83c37d34a49:obs-10",
+        "physical_commands": 8
+      },
+      "robot_event_counts": {
+        "observation": 10,
+        "command_start": 8,
+        "command_end": 8
+      },
+      "python_programs": [],
+      "upstream_image_blocks": 104,
+      "gateway_error_events": {
+        "upstream_error": 5
+      },
+      "initial_rgb_sha256": "d4e513bccfa9e0ef3119d15f7eff66d1e41585e3e2d8e1374328585ac79d3b8d",
+      "final_rgb": {
+        "file": "panda-lift-cc-intuitive.jpg",
+        "sha256": "c53e0a9671e9ab8f510b9deba3cbd2dd841e636a36580ad0e2d1fae4b6b02b00"
+      }
+    },
+    {
+      "trial_id": "36d4e07e635f45c892779933f6f01e72",
+      "task": "panda-lift",
+      "task_digest": "7886c323626723149316a255bc408b1e124f6ab2a080557916dc17241165466e",
+      "agent": "cc",
+      "profile": "expert",
+      "status": "completed",
+      "reward": 1.0,
+      "rewards": {
+        "reward": 1.0,
+        "physical_success": 1.0,
+        "depth_programs": 3.0
+      },
+      "agent_metrics": {
+        "compact_count": 0,
+        "compact_attempts": 0,
+        "compact_limit_reached": 0
+      },
+      "model_requests": 6,
+      "elapsed_sec": 263.264,
+      "cc_version": "2.1.296 (Claude Code)",
+      "physical_evidence": {
+        "task": "lift",
+        "seed": 17,
+        "simulator": "robosuite Lift / MuJoCo 3.3.0",
+        "success": true,
+        "native_lift_success": true,
+        "hold_samples": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "hold_duration_sec": 0.5,
+        "cube_world_position": [
+          -0.002257779390834534,
+          0.0036449353329727424,
+          0.9701692396254347
+        ],
+        "tcp_pose": {
+          "position_m": [
+            0.5585929418173108,
+            0.003620500531472227,
+            0.053425084476054985
+          ],
+          "quaternion_wxyz": [
+            0.04429105455393055,
+            0.7051903830911048,
+            0.7062201328466788,
+            0.044698434473043475
+          ]
+        },
+        "servo_steps": 352,
+        "simulated_sec": 17.600000000001124,
+        "reach_goal": null,
+        "observation_id": "203f4e9ef35f4b52:obs-13",
+        "physical_commands": 8
+      },
+      "robot_event_counts": {
+        "observation": 13,
+        "python_start": 4,
+        "python_end": 4,
+        "python_tool_call": 11,
+        "command_start": 8,
+        "command_end": 8
+      },
+      "python_programs": [
+        "res = {}\nfor item in observation['artifacts']:\n    cam = item['camera']\n    rgb = artifacts.load(item['rgb']['artifact_id'])\n    depth = artifacts.load(item['depth']['artifact_id'])\n    K = np.array(item['calibration']['K'])\n    T = np.array(item['calibration']['T_base_camera'])\n    \n    # Red mask: high R, low G, low B\n    r, g, b = rgb[:,:,0].astype(float), rgb[:,:,1].astype(float), rgb[:,:,2].astype(float)\n    mask = (r > 100) & (r > 1.8 * g) & (r > 1.8 * b) & np.isfinite(depth) & (depth > 0.05) & (depth < 3.0)\n    \n    vs, us = np.where(mask)\n    zs = depth[vs, us]\n    \n    ones = np.ones_like(us, dtype=float)\n    pix = np.stack([us, vs, ones], axis=0) # 3 x N\n    cam_pts = (np.linalg.inv(K) @ pix) * zs[None, :]\n    cam_pts_h = np.vstack([cam_pts, ones[None, :]])\n    base_pts = (T @ cam_pts_h)[:3, :].T # N x 3\n    \n    res[cam] = {\n        'count': int(len(us)),\n        'uv_mean': [float(us.mean()), float(vs.mean())],\n        'xyz_mean': base_pts.mean(axis=0).tolist(),\n        'xyz_median': np.median(base_pts, axis=0).tolist(),\n        'xyz_min': base_pts.min(axis=0).tolist(),\n        'xyz_max': base_pts.max(axis=0).tolist(),\n    }\n    if cam == 'birdview':\n        # top surface only\n        top_mask = base_pts[:, 2] > (np.percentile(base_pts[:, 2], 50) - 0.005)\n        top_pts = base_pts[top_mask]\n        res['birdview_top'] = {\n            'xyz_mean': top_pts.mean(axis=0).tolist(),\n            'xyz_median': np.median(top_pts, axis=0).tolist(),\n            'z_max': float(top_pts[:, 2].max()),\n        }\n\nresult = res\n",
+        "# Analyze top surface of cube from both cameras\ntop_pts_list = []\nfor item in observation['artifacts']:\n    cam = item['camera']\n    rgb = artifacts.load(item['rgb']['artifact_id'])\n    depth = artifacts.load(item['depth']['artifact_id'])\n    K = np.array(item['calibration']['K'])\n    T = np.array(item['calibration']['T_base_camera'])\n    \n    r, g, b = rgb[:,:,0].astype(float), rgb[:,:,1].astype(float), rgb[:,:,2].astype(float)\n    mask = (r > 100) & (r > 1.8 * g) & (r > 1.8 * b) & np.isfinite(depth) & (depth > 0.05) & (depth < 3.0)\n    vs, us = np.where(mask)\n    zs = depth[vs, us]\n    ones = np.ones_like(us, dtype=float)\n    pix = np.stack([us, vs, ones], axis=0)\n    cam_pts = (np.linalg.inv(K) @ pix) * zs[None, :]\n    base_pts = (T @ np.vstack([cam_pts, ones[None, :]]))[:3, :].T\n    \n    # Filter for top surface of the cube (z > -0.075)\n    top_pts = base_pts[base_pts[:, 2] > -0.075]\n    top_pts_list.append(top_pts)\n\nall_top = np.vstack(top_pts_list)\ncenter_xy = np.median(all_top[:, :2], axis=0)\ntop_z = float(np.median(all_top[:, 2]))\n\n# Target x, y, and grasp z (cube top is ~ -0.070, table is -0.112, center is -0.091)\ntarget_x = float(center_xy[0])\ntarget_y = float(center_xy[1])\npregrasp_z = 0.00\ngrasp_z = -0.090\n\nobs_id = observation['observation_id']\ntcp = np.array(observation['state']['tcp_pose']['position_m'])\n\n# Step 1: Move horizontally and slightly down towards pre-grasp [target_x, target_y, pregrasp_z]\n# Since distance from [0.457, 0.0, 0.099] to [0.556, 0.003, 0.00] is ~0.14m > 0.12m limit, split into 2 steps\nmid_target = np.array([target_x, target_y, 0.04])\ndelta1 = mid_target - tcp\nr1 = robot.call('move_to', {\n    'observation_id': obs_id,\n    'command_id': 'move_pregrasp_1',\n    'note': 'Move above cube at z=0.04',\n    'frame': 'base',\n    'translation_m': delta1.tolist(),\n    'rotation_delta_rad': [0.0, 0.0, 0.0]\n})\nobs_id = r1['observation_id']\ntcp = np.array(r1['state']['tcp_pose']['position_m'])\n\n# Step 2: Move down to grasp_z = -0.080 first, then -0.092\ngrasp_target_1 = np.array([target_x, target_y, -0.04])\ndelta2 = grasp_target_1 - tcp\nr2 = robot.call('move_to', {\n    'observation_id': obs_id,\n    'command_id': 'move_pregrasp_2',\n    'note': 'Descend above cube to z=-0.04',\n    'frame': 'base',\n    'translation_m': delta2.tolist(),\n    'rotation_delta_rad': [0.0, 0.0, 0.0]\n})\nobs_id = r2['observation_id']\ntcp = np.array(r2['state']['tcp_pose']['position_m'])\n\n# Step 3: Descend to grasp height z = -0.091\ngrasp_target_2 = np.array([target_x, target_y, -0.091])\ndelta3 = grasp_target_2 - tcp\nr3 = robot.call('move_to', {\n    'observation_id': obs_id,\n    'command_id': 'move_grasp_depth',\n    'note': 'Descend to cube grasp height z=-0.091',\n    'frame': 'base',\n    'translation_m': delta3.tolist(),\n    'rotation_delta_rad': [0.0, 0.0, 0.0]\n})\nobs_id = r3['observation_id']\ntcp = np.array(r3['state']['tcp_pose']['position_m'])\n\nobs_final = robot.call('observe', {'cameras': ['agentview', 'birdview']})\n\nresult = {\n    'cube_top_xy': center_xy.tolist(),\n    'cube_top_z': top_z,\n    'final_tcp': tcp.tolist(),\n    'receipts': [r1['receipt']['status'], r2['receipt']['status'], r3['receipt']['status']],\n    'final_obs_id': obs_final['observation_id']\n}\n",
+        "obs_id = observation['observation_id']\n\n# Slightly lower by 5mm so finger pads are squarely at cube center\nr1 = robot.call('move_to', {\n    'observation_id': obs_id,\n    'command_id': 'fine_lower_grasp',\n    'note': 'Lower 5mm to center finger pads on cube',\n    'frame': 'base',\n    'translation_m': [0.0, 0.0, -0.005],\n    'rotation_delta_rad': [0.0, 0.0, 0.0]\n})\nobs_id = r1['observation_id']\n\n# Close gripper\nr2 = robot.call('gripper', {\n    'observation_id': obs_id,\n    'command_id': 'close_gripper_cube',\n    'note': 'Close gripper on red cube',\n    'command': 'close'\n})\nobs_id = r2['observation_id']\n\n# Observe after closure to verify grasp before lifting\nobs_closed = robot.call('observe', {'cameras': ['agentview', 'birdview']})\n\nresult = {\n    'move_status': r1['receipt']['status'],\n    'gripper_status': r2['receipt']['status'],\n    'gripper_width_m': obs_closed['state']['gripper']['width_m'],\n    'tcp_pose': obs_closed['state']['tcp_pose']['position_m'],\n    'obs_id': obs_closed['observation_id']\n}\n",
+        "obs_id = observation['observation_id']\n\n# Lift step 1: +0.10 m in Z\nr1 = robot.call('move_to', {\n    'observation_id': obs_id,\n    'command_id': 'lift_cube_1',\n    'note': 'Lift cube by 0.10 m',\n    'frame': 'base',\n    'translation_m': [0.0, 0.0, 0.10],\n    'rotation_delta_rad': [0.0, 0.0, 0.0]\n})\nobs_id = r1['observation_id']\n\n# Lift step 2: +0.05 m in Z (total lift 0.15 m)\nr2 = robot.call('move_to', {\n    'observation_id': obs_id,\n    'command_id': 'lift_cube_2',\n    'note': 'Lift cube another 0.05 m and hold',\n    'frame': 'base',\n    'translation_m': [0.0, 0.0, 0.05],\n    'rotation_delta_rad': [0.0, 0.0, 0.0]\n})\nobs_id = r2['observation_id']\n\n# Hold in place for >0.5 simulated seconds by issuing a zero-translation move_to (each command runs 12 servo steps = 0.6s)\nr3 = robot.call('move_to', {\n    'observation_id': obs_id,\n    'command_id': 'hold_cube_steady',\n    'note': 'Hold lifted cube steady for 0.6 simulated seconds',\n    'frame': 'base',\n    'translation_m': [0.0, 0.0, 0.0],\n    'rotation_delta_rad': [0.0, 0.0, 0.0]\n})\nobs_id = r3['observation_id']\n\nobs_lifted = robot.call('observe', {'cameras': ['agentview', 'birdview']})\n\n# Also measure the lifted cube's 3D points from agentview depth artifact\nitem = obs_lifted['artifacts'][0]\nrgb = artifacts.load(item['rgb']['artifact_id'])\ndepth = artifacts.load(item['depth']['artifact_id'])\nK = np.array(item['calibration']['K'])\nT = np.array(item['calibration']['T_base_camera'])\nr, g, b = rgb[:,:,0].astype(float), rgb[:,:,1].astype(float), rgb[:,:,2].astype(float)\nmask = (r > 100) & (r > 1.8 * g) & (r > 1.8 * b) & np.isfinite(depth) & (depth > 0.05) & (depth < 3.0)\nvs, us = np.where(mask)\nzs = depth[vs, us]\nones = np.ones_like(us, dtype=float)\npix = np.stack([us, vs, ones], axis=0)\ncam_pts = (np.linalg.inv(K) @ pix) * zs[None, :]\nbase_pts = (T @ np.vstack([cam_pts, ones[None, :]]))[:3, :].T\n\nresult = {\n    'receipts': [r1['receipt']['status'], r2['receipt']['status'], r3['receipt']['status']],\n    'tcp_pose': obs_lifted['state']['tcp_pose']['position_m'],\n    'gripper_width_m': obs_lifted['state']['gripper']['width_m'],\n    'sim_time_s': obs_lifted['state']['timestamp']['simulation_sec'],\n    'cube_red_pixels': int(len(us)),\n    'cube_xyz_median': np.median(base_pts, axis=0).tolist() if len(us) > 0 else None,\n    'cube_z_min': float(base_pts[:, 2].min()) if len(us) > 0 else None,\n    'table_z': obs_lifted['robot_card']['table_surface_z_m'],\n    'obs_id': obs_lifted['observation_id']\n}\n"
+      ],
+      "upstream_image_blocks": 22,
+      "gateway_error_events": {},
+      "initial_rgb_sha256": "d4e513bccfa9e0ef3119d15f7eff66d1e41585e3e2d8e1374328585ac79d3b8d",
+      "final_rgb": {
+        "file": "panda-lift-cc-expert.jpg",
+        "sha256": "acd8b7695021771ae9aba8774751ce5fb584e4be806e169d5d242cc35c4785c8"
+      }
+    },
+    {
+      "trial_id": "96ecb402244249d7b961703980188232",
+      "task": "panda-lift",
+      "task_digest": "7886c323626723149316a255bc408b1e124f6ab2a080557916dc17241165466e",
+      "agent": "dsh",
+      "profile": "intuitive",
+      "status": "aborted",
+      "agent_metrics": {
+        "completed": 0,
+        "ptc_subcalls": 0,
+        "ptc_successful_subcalls": 0
+      },
+      "model_requests": 3,
+      "elapsed_sec": 82.626,
+      "error": "RuntimeError: Agent execution failed with exit 1",
+      "upstream_failure": "HTTP 500 PlatformNoAvailableAccount; upstream retries exhausted",
+      "physical_evidence": {
+        "task": "lift",
+        "seed": 17,
+        "simulator": "robosuite Lift / MuJoCo 3.3.0",
+        "success": false,
+        "native_lift_success": false,
+        "hold_samples": [
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false,
+          false
+        ],
+        "hold_duration_sec": 0.5,
+        "cube_world_position": [
+          -0.002282525427968151,
+          0.004020216973637553,
+          0.8208980178860535
+        ],
+        "tcp_pose": {
+          "position_m": [
+            0.4572317061010187,
+            -4.634741844857884e-12,
+            0.09904387158518901
+          ],
+          "quaternion_wxyz": [
+            0.04497012360108676,
+            0.7055022092871946,
+            0.705849842499702,
+            0.04494797567562292
+          ]
+        },
+        "servo_steps": 12,
+        "simulated_sec": 0.6000000000000004,
+        "reach_goal": null,
+        "observation_id": "67b0a1219a5e42a0:obs-1",
+        "physical_commands": 0
+      },
+      "robot_event_counts": {
+        "observation": 1
+      },
+      "python_programs": [],
+      "upstream_image_blocks": 0,
+      "gateway_error_events": {
+        "upstream_error": 3
+      },
+      "initial_rgb_sha256": "d4e513bccfa9e0ef3119d15f7eff66d1e41585e3e2d8e1374328585ac79d3b8d",
+      "final_rgb": {
+        "file": "panda-lift-dsh-intuitive.jpg",
+        "sha256": "d4e513bccfa9e0ef3119d15f7eff66d1e41585e3e2d8e1374328585ac79d3b8d"
+      }
+    },
+    {
+      "trial_id": "6e079aff1be749f18bdfc8c742493f96",
+      "task": "panda-lift",
+      "task_digest": "7886c323626723149316a255bc408b1e124f6ab2a080557916dc17241165466e",
+      "agent": "dsh",
+      "profile": "expert",
+      "status": "aborted",
+      "agent_metrics": {
+        "completed": 0,
+        "ptc_subcalls": 8,
+        "ptc_successful_subcalls": 8
+      },
+      "model_requests": 7,
+      "elapsed_sec": 175.092,
+      "error": "RuntimeError: Agent execution failed with exit 1",
+      "upstream_failure": "HTTP 500 PlatformNoAvailableAccount; upstream retries exhausted",
+      "physical_evidence": {
+        "task": "lift",
+        "seed": 17,
+        "simulator": "robosuite Lift / MuJoCo 3.3.0",
+        "success": true,
+        "native_lift_success": true,
+        "hold_samples": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "hold_duration_sec": 0.5,
+        "cube_world_position": [
+          -0.0020546031186690033,
+          0.003418588044137017,
+          0.989949374768357
+        ],
+        "tcp_pose": {
+          "position_m": [
+            0.5562819333153567,
+            0.003394403621862245,
+            0.08194638343678184
+          ],
+          "quaternion_wxyz": [
+            0.043975862561154204,
+            0.7051685962877154,
+            0.7062873112154842,
+            0.04429004783940952
+          ]
+        },
+        "servo_steps": 262,
+        "simulated_sec": 13.100000000001044,
+        "reach_goal": null,
+        "observation_id": "3032d280966a40b0:obs-11",
+        "physical_commands": 6
+      },
+      "robot_event_counts": {
+        "observation": 11,
+        "python_start": 3,
+        "python_end": 3,
+        "python_tool_call": 2,
+        "command_start": 6,
+        "command_end": 6,
+        "batch_end": 2
+      },
+      "python_programs": [
+        "\nimport numpy as np\n\nout = {}\nfor cam in observation.get('artifacts', []):\n    cam_name = cam['camera']\n    rgb_id = cam['rgb']['artifact_id']\n    depth_id = cam['depth']['artifact_id']\n    K = np.array(cam['calibration']['K'], dtype=float)\n    T = np.array(cam['calibration']['T_base_camera'], dtype=float)\n    \n    rgb = artifacts.load(rgb_id)\n    depth = artifacts.load(depth_id)\n    \n    # find red pixels\n    r, g, b = rgb[:,:,0].astype(float), rgb[:,:,1].astype(float), rgb[:,:,2].astype(float)\n    mask = (r > 130) & (r - np.maximum(g, b) > 50) & np.isfinite(depth) & (depth > 0.05) & (depth < 2.0)\n    vs, us = np.where(mask)\n    if len(us) > 0:\n        zs = depth[vs, us]\n        ones = np.ones_like(us, dtype=float)\n        pix = np.stack([us, vs, ones], axis=0)\n        cam_pts = np.linalg.inv(K) @ pix * zs[None, :]\n        cam_pts_h = np.vstack([cam_pts, ones])\n        base_pts = (T @ cam_pts_h)[:3, :].T\n        out[cam_name] = {\n            'count': int(len(us)),\n            'uv_median': [int(np.median(us)), int(np.median(vs))],\n            'xyz_median': np.median(base_pts, axis=0).tolist(),\n            'xyz_min': np.min(base_pts, axis=0).tolist(),\n            'xyz_max': np.max(base_pts, axis=0).tolist(),\n            'z_p90': float(np.percentile(base_pts[:,2], 90)),\n            'z_p10': float(np.percentile(base_pts[:,2], 10)),\n        }\n\nresult = {\n    'observation_id': observation['observation_id'],\n    'tcp_pose': observation['state']['tcp_pose'],\n    'gripper': observation['state']['gripper'],\n    'task': observation.get('task'),\n    'robot_card': observation.get('robot_card'),\n    'red_analysis': out\n}\n",
+        "\nimport numpy as np\n\npts_by_cam = {}\nfor cam in observation.get('artifacts', []):\n    cam_name = cam['camera']\n    rgb = artifacts.load(cam['rgb']['artifact_id'])\n    depth = artifacts.load(cam['depth']['artifact_id'])\n    K = np.array(cam['calibration']['K'], dtype=float)\n    T = np.array(cam['calibration']['T_base_camera'], dtype=float)\n    \n    r, g, b = rgb[:,:,0].astype(float), rgb[:,:,1].astype(float), rgb[:,:,2].astype(float)\n    mask = (r > 120) & (r - np.maximum(g, b) > 40) & np.isfinite(depth) & (depth > 0.05) & (depth < 3.0)\n    vs, us = np.where(mask)\n    if len(us) > 0:\n        zs = depth[vs, us]\n        ones = np.ones_like(us, dtype=float)\n        pix = np.stack([us, vs, ones], axis=0)\n        cam_pts = np.linalg.inv(K) @ pix * zs[None, :]\n        base_pts = (T @ np.vstack([cam_pts, ones]))[:3, :].T\n        # filter for top surface of cube (z > -0.075)\n        top_pts = base_pts[base_pts[:, 2] > -0.075]\n        pts_by_cam[cam_name] = {\n            'all_count': int(len(base_pts)),\n            'top_count': int(len(top_pts)),\n            'top_mean': np.mean(top_pts, axis=0).tolist() if len(top_pts) > 0 else None,\n            'top_median': np.median(top_pts, axis=0).tolist() if len(top_pts) > 0 else None,\n        }\n\n# Use average of agentview and birdview top_median if both available\nav_top = np.array(pts_by_cam['agentview']['top_median'])\nbv_top = np.array(pts_by_cam['birdview']['top_median']) if pts_by_cam.get('birdview', {}).get('top_median') else av_top\ntarget_xy = 0.5 * (av_top[:2] + bv_top[:2])\nz_top = float(av_top[2])\n\nobs_id = observation['observation_id']\ncur_pos = np.array(observation['state']['tcp_pose']['position_m'], dtype=float)\n\n# Step 1: Move over the cube and partway down (to z = 0.01)\ngoal1 = np.array([target_xy[0], target_xy[1], 0.01])\ndelta1 = goal1 - cur_pos\nif np.linalg.norm(delta1) > 0.115:\n    delta1 = delta1 / np.linalg.norm(delta1) * 0.115\n\nr1 = robot.call('move_to', {\n    'observation_id': obs_id,\n    'command_id': 'move_hover_1',\n    'note': 'Move toward hover above red cube',\n    'frame': 'base',\n    'translation_m': delta1.tolist(),\n    'rotation_delta_rad': [0.0, 0.0, 0.0]\n})\nobs_id = r1['observation_id']\ncur_pos = np.array(r1['state']['tcp_pose']['position_m'], dtype=float)\n\n# Step 2: Move to grasp pose at z = z_top - 0.018 (around -0.087)\ngrasp_z = max(z_top - 0.018, -0.092)\ngoal2 = np.array([target_xy[0], target_xy[1], grasp_z])\ndelta2 = goal2 - cur_pos\nif np.linalg.norm(delta2) > 0.115:\n    delta2 = delta2 / np.linalg.norm(delta2) * 0.115\n\nr2 = robot.call('move_to', {\n    'observation_id': obs_id,\n    'command_id': 'move_grasp_depth',\n    'note': 'Descend to grasp depth around red cube',\n    'frame': 'base',\n    'translation_m': delta2.tolist(),\n    'rotation_delta_rad': [0.0, 0.0, 0.0]\n})\n\nresult = {\n    'pts_by_cam': pts_by_cam,\n    'target_xy': target_xy.tolist(),\n    'z_top': z_top,\n    'grasp_z': grasp_z,\n    'r1_status': r1['receipt']['status'],\n    'r2_status': r2['receipt']['status'],\n    'final_tcp': r2['state']['tcp_pose'],\n    'observation_id': r2['observation_id']\n}\n",
+        "\nimport numpy as np\n\ncam = [c for c in observation['artifacts'] if c['camera'] == 'agentview'][0]\nrgb = artifacts.load(cam['rgb']['artifact_id'])\ndepth = artifacts.load(cam['depth']['artifact_id'])\nK = np.array(cam['calibration']['K'], dtype=float)\nT = np.array(cam['calibration']['T_base_camera'], dtype=float)\n\nr, g, b = rgb[:,:,0].astype(float), rgb[:,:,1].astype(float), rgb[:,:,2].astype(float)\nmask = (r > 120) & (r - np.maximum(g, b) > 40) & np.isfinite(depth) & (depth > 0.05) & (depth < 2.0)\nvs, us = np.where(mask)\nzs = depth[vs, us]\nones = np.ones_like(us, dtype=float)\npix = np.stack([us, vs, ones], axis=0)\ncam_pts = np.linalg.inv(K) @ pix * zs[None, :]\nbase_pts = (T @ np.vstack([cam_pts, ones]))[:3, :].T\n\nresult = {\n    'red_pixel_count': int(len(us)),\n    'cube_xyz_median': np.median(base_pts, axis=0).tolist() if len(us) > 0 else None,\n    'cube_z_min': float(np.min(base_pts[:, 2])) if len(us) > 0 else None,\n    'cube_z_max': float(np.max(base_pts[:, 2])) if len(us) > 0 else None,\n    'table_clearance_m': float(np.min(base_pts[:, 2]) - (-0.112)) if len(us) > 0 else None\n}\n"
+      ],
+      "upstream_image_blocks": 46,
+      "gateway_error_events": {
+        "upstream_error": 3
+      },
+      "initial_rgb_sha256": "d4e513bccfa9e0ef3119d15f7eff66d1e41585e3e2d8e1374328585ac79d3b8d",
+      "final_rgb": {
+        "file": "panda-lift-dsh-expert.jpg",
+        "sha256": "bec17e8ca674a2f561570f52773be60b6005ba84ff33070b1b324071aa307443"
+      }
+    }
+  ]
+}
