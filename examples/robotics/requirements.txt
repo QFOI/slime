@@ -1,0 +1,12 @@
+# Install the separately versioned shared runtime from your authorized checkout:
+# python -m pip install -e '/path/to/robot-rollout[sim]'
+# robot-rollout commit: addbad62ac202332aad8b14eb10ea481a0402936
+# Slime's Sample/harness imports require CPU torch even for rollout-only evaluation.
+aiohttp>=3.11,<4
+httpx>=0.28,<1
+mcp==1.30.0
+numpy==1.26.4
+pydantic>=2.10,<3
+PyYAML>=6,<7
+torch>=2.2
+uvicorn>=0.30

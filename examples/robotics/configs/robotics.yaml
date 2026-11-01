@@ -1,0 +1,44 @@
+# Harbor task packages are the only task dataset. Paths are relative to this file.
+tasks:
+  - ../tasks/panda-reach
+  - ../tasks/panda-lift
+agents: [cc, dsh]
+profiles: [intuitive, expert]
+repeats: 1
+concurrency: 1
+max_model_requests: 60
+image: slime-robotics:0.1
+output_dir: ../runs/evaluation
+runtime:
+  # SGLang /v1, other OpenAI-compatible APIs, Anthropic and Gemini are supported.
+  model: robot-model
+  models:
+    robot-model:
+      kind: openai
+      base_url: http://127.0.0.1:8000/v1
+      model: your-vision-tool-model
+      api_key_env: ROBOT_MODEL_API_KEY
+      image_mode: preserve
+      sampling:
+        temperature: 0.2
+  prompt:
+    user: Complete the Harbor instruction using current observations, then verify the physical outcome.
+    # Optional system_mode: append and system_parts: [{text: ...}, {file: ...}].
+    # The profile's control/sensor contract is always prepended.
+  claude:
+    expected_version: 2.1.296
+    max_turns: 50
+    max_output_tokens: 8192
+    thinking_budget: null
+    compaction: {enabled: true, threshold_pct: 70, max_compactions: 2}
+    multiagent: {enabled: false}
+  dsh:
+    expected_version: 0.1.0-rc.6
+    acp_version: 0.1.0-rc.6
+    max_model_requests: 60
+    max_output_tokens: 8192
+    compaction_enabled: true
+    compaction_threshold: 0.7
+  run:
+    timeout_sec: 1800
+    api_trace: true

@@ -144,8 +144,9 @@ async def exec_and_wait(
         idempotent=True,
     )
     await sb.exec(
-        f"chmod +x {launcher}; "
-        f"mkdir {lock_dir} 2>/dev/null || exit 0; "
+        f"chmod +x {launcher} || exit 1; "
+        f"mkdir {lock_dir} 2>/dev/null || {{ test -d {lock_dir} && exit 0; "
+        "echo 'Cannot create agent launch lock' >&2; exit 1; }; "
         f"setsid bash {launcher} < /dev/null > {out_file} 2>&1 &",
         user=user,
         env=env,

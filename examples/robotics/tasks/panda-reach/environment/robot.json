@@ -1,0 +1,6 @@
+{
+  "driver": "robot_rollout.robosuite_driver:create_driver",
+  "task": "reach_pose",
+  "seed": 17,
+  "command_budget": 80
+}

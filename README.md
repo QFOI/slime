@@ -1,3 +1,5 @@
+> **Robotics fork:** Harbor-native CC/DSH robot rollouts and two control profiles: [examples/robotics](examples/robotics/README.md).
+
 # slime
 
 [中文版](./README_zh.md)

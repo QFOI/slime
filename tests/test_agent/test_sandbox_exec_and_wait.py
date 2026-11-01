@@ -1,6 +1,6 @@
 """CPU tests for ``slime.agent.sandbox.exec_and_wait``'s spawn-lock contract.
 
-The detached spawn is guarded by ``mkdir {lock_dir} || exit 0`` so that a
+The detached spawn is guarded by creating a lock directory so that a
 transport-level retry of the *same* spawn RPC (a severed response replayed by
 ``E2BSandbox._rpc_retry``) cannot double-execute the command. That guard must
 not leak into the next *logical* invocation of the same tag: the lock dir used
@@ -23,6 +23,7 @@ from __future__ import annotations
 import asyncio
 import re
 import shlex
+import subprocess
 from types import SimpleNamespace
 
 import pytest
@@ -34,7 +35,7 @@ NUM_GPUS = 0
 
 
 _POLL_RE = re.compile(r"test -f (\S+) && cat \1")
-_SPAWN_RE = re.compile(r"mkdir (\S+) 2>/dev/null \|\| exit 0; (.*)$")
+_SPAWN_RE = re.compile(r"mkdir (\S+) 2>/dev/null \|\| \{ .*? \}; (.*)$")
 _LAUNCH_RE = re.compile(r"setsid bash (\S+) ")
 _TAIL_RE = re.compile(r"tail -c \d+ (\S+)")
 
@@ -161,6 +162,22 @@ def test_transport_retry_of_the_spawn_stays_deduped(fast_marker_polls):
     # The per-invocation cleanup must NOT ride inside the guarded spawn —
     # behind the guard it never runs on a replayed tag.
     assert not any("rm -" in c and "setsid" in c for c in sb.exec_log)
+
+
+@pytest.mark.parametrize("existing_lock", [False, True])
+def test_launch_lock_failure_only_succeeds_for_a_real_retry(tmp_path, fast_marker_polls, existing_lock):
+    """Disk-full/permission failures must not silently wait for a nonexistent CLI."""
+    sb = ShellFakeSandbox(run_script=lambda n: (0, "ok"))
+    asyncio.run(exec_and_wait(sb, cmd="true", time_budget_sec=60, tag="job"))
+    spawn = next(cmd for cmd in sb.exec_log if "setsid" in cmd).replace("/tmp/", str(tmp_path) + "/")
+    (tmp_path / ".job.sh").write_text("exit 0\n")
+    if existing_lock:
+        (tmp_path / ".job.spawned").mkdir()
+    # Execute the actual guard in bash, injecting a failed mkdir syscall.
+    result = subprocess.run(["bash", "-c", "mkdir() { return 1; }; " + spawn], capture_output=True, timeout=5)
+    assert result.returncode == (0 if existing_lock else 1)
+    if not existing_lock:
+        assert b"Cannot create agent launch lock" in result.stderr
 
 
 def test_completion_poll_reads_files_without_starting_a_shell(fast_marker_polls):

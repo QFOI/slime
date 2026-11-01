@@ -5,10 +5,12 @@ from __future__ import annotations
 from .claude_code import ClaudeCodeHarness
 from .codex import CodexHarness
 from .common import BaseHarness, HarnessContext
+from .deepseek import DeepSeekHarness
 
 __all__ = [
     "BaseHarness",
     "HarnessContext",
     "ClaudeCodeHarness",
     "CodexHarness",
+    "DeepSeekHarness",
 ]

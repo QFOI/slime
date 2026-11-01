@@ -56,15 +56,16 @@ class ClaudeCodeHarness(BaseHarness):
 
     async def write_config(self, sb: Sandbox, ctx: HarnessContext) -> None:
         """Pre-ack bypass-permissions so claude-code starts headless."""
-        limit = int(os.environ.get(self.max_compactions_env, "-1"))
+        limit = int(ctx.options.get("max_compactions", os.environ.get(self.max_compactions_env, "-1")))
         if limit < -1:
             raise ValueError(f"{self.max_compactions_env} must be -1 or nonnegative")
         directory = f"{ctx.workdir}/.harness"
         hook_path = "/tmp/slime-claude-compaction.py"
-        await sb.write_file(hook_path, Path(__file__).with_name("compaction.py"))
+        await sb.write_file(hook_path, Path(__file__).with_name("compaction.py"), user="agent")
         command = f"python3 {hook_path} {shlex.quote(directory)} {limit}"
         settings = json.dumps(
             {
+                **ctx.options.get("settings", {}),
                 "hasCompletedOnboarding": True,
                 "bypassPermissionsModeAccepted": True,
                 "hooks": {
@@ -84,19 +85,32 @@ class ClaudeCodeHarness(BaseHarness):
         )
 
     async def launch_and_wait(self, sb: Sandbox, ctx: HarnessContext, prompt: str, time_budget_sec: int) -> int:
-        cmd = f"/usr/local/bin/claude -p {shlex.quote(prompt)} {self.launch_flags}"
-        extra = os.environ.get(self.extra_args_env, "").strip()
+        executable = shlex.quote(ctx.options.get("executable", "/usr/local/bin/claude"))
+        flags = ctx.options.get("launch_flags", self.launch_flags)
+        cmd = f"{executable} -p {shlex.quote(prompt)} {flags}"
+        extra = "" if ctx.options else os.environ.get(self.extra_args_env, "").strip()
         if extra:
             cmd = f"{cmd} {extra}"
+        if ctx.options.get("args"):
+            cmd += " " + shlex.join(ctx.options["args"])
         env = {
             "ANTHROPIC_BASE_URL": ctx.adapter_url,
             "ANTHROPIC_AUTH_TOKEN": ctx.session_id,
             "ANTHROPIC_MODEL": ctx.model_label,
             **self.static_env,
         }
-        extra_envs = os.environ.get(self.extra_envs_env, "").strip()
+        extra_envs = "" if ctx.options else os.environ.get(self.extra_envs_env, "").strip()
         if extra_envs:
             env.update(json.loads(extra_envs))
+        env.update(ctx.options.get("env", {}))
+        if ctx.options:
+            # A robot episode cannot accidentally route to a developer's account.
+            env.update(
+                ANTHROPIC_BASE_URL=ctx.adapter_url,
+                ANTHROPIC_AUTH_TOKEN=ctx.session_id,
+                ANTHROPIC_API_KEY=ctx.session_id,
+                ANTHROPIC_MODEL=ctx.model_label,
+            )
         directory = shlex.quote(f"{ctx.workdir}/.harness")
         # The detached launcher stays alive to write its normal completion
         # marker when the compaction hook stops only the CLI child.

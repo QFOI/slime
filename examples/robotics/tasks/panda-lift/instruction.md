@@ -1,0 +1,1 @@
+Pick up the red cube with the Panda gripper and hold it above the table for at least 0.5 simulated seconds. Ground each motion in the current camera observations and robot measurements; verify the grasp and lift visually.

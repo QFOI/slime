@@ -21,7 +21,7 @@ import os
 import shutil
 import tempfile
 from abc import ABC, ABCMeta, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 from slime.agent import sandbox as _sandbox
@@ -44,14 +44,17 @@ class HarnessContext:
     """Generic run context, free of any task fields.
 
     model_label is the model name the harness advertises to its CLI. The slime
-    adapter ignores it and serves whatever upstream sglang has loaded, so it is
-    not a run() parameter.
+    coding adapter ignores it and serves the loaded SGLang model; external API
+    rollouts set it explicitly through run().
     """
 
     workdir: str
     session_id: str
     adapter_url: str
     model_label: str = "slime-actor"
+    # Per-episode CLI configuration; never change process-wide environment for
+    # concurrent samples. Existing coding tasks keep their environment defaults.
+    options: dict = field(default_factory=dict)
 
 
 class BaseHarness(ABC, metaclass=SingletonABCMeta):
@@ -87,6 +90,8 @@ class BaseHarness(ABC, metaclass=SingletonABCMeta):
         adapter_url: str,
         time_budget_sec: int,
         prompt: str,
+        model_label: str = "slime-actor",
+        options: dict | None = None,
     ) -> int:
         """Run the harness in the sandbox and return its exit code.
 
@@ -99,6 +104,8 @@ class BaseHarness(ABC, metaclass=SingletonABCMeta):
             workdir=workdir,
             session_id=session_id,
             adapter_url=adapter_url,
+            model_label=model_label,
+            options=options or {},
         )
         await self.write_config(sb, ctx)
         return await self.launch_and_wait(sb, ctx, prompt, time_budget_sec)

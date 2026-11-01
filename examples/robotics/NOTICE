@@ -1,0 +1,7 @@
+The expert control prompt and robot runtime interface are derived from
+QFOI/robot-rollout v0.5.1 (Apache-2.0), commit
+addbad62ac202332aad8b14eb10ea481a0402936.
+
+Claude Code is separately licensed software installed from its official
+distribution. DeepSeek Harness is installed from its official distribution with
+the separately maintained dependency lock. Neither binary is part of this fork.

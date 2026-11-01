@@ -1,0 +1,1 @@
+Move the Panda end effector to the public goal pose returned by observe. Satisfy both position and orientation and hold the pose for at least 0.5 simulated seconds. Use the robot tools; do not inspect the simulator or evaluator.
