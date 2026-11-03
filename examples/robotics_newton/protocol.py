@@ -5,9 +5,9 @@ tests/test_robotics/smoke.py, the Harbor verifiers): move_to is a relative
 base-frame translation plus axis-angle rotation anchored to the measured TCP;
 actions must cite the newest observation_id; command_id is idempotent; physical
 commands are budgeted and executed serially; batch_actions is a literal list.
-After the episode, the evaluator samples the task condition 10 times at 20 Hz
-and the reward follows the Harbor verifier: success needs every hold sample,
-the full 0.5 s window, and at least one physical command.
+After the episode, evaluator.score turns the simulator's evidence (hold
+samples, grasp contacts, carry drift, episode monitors) into the reward; the
+policy's own text never reaches it.
 """
 
 from __future__ import annotations
@@ -21,6 +21,7 @@ from typing import Protocol
 import numpy as np
 from scipy.spatial.transform import Rotation
 
+from .evaluator import V2, EvaluatorConfig, score
 from .sim.scene import FINGER_OPEN, Layout
 
 INSTRUCTIONS = {
@@ -49,7 +50,7 @@ class Backend(Protocol):
 
     async def snapshot(self, world: int) -> dict: ...
 
-    async def evaluate(self, world: int) -> dict: ...
+    async def evaluate(self, world: int, carry: bool, samples: int) -> dict: ...
 
 
 @dataclasses.dataclass(frozen=True)
@@ -109,6 +110,7 @@ class Episode:
         backend: Backend,
         *,
         limits: Limits = DEFAULT_LIMITS,
+        evaluator: EvaluatorConfig = V2,
         cameras: list[dict] | None = None,
     ):
         self.id = episode_id
@@ -116,6 +118,7 @@ class Episode:
         self.layout = layout
         self.backend = backend
         self.limits = limits
+        self.evaluator = evaluator
         self.cameras = cameras or []
         self.observation_id: str | None = None
         self.physical_commands = 0
@@ -155,27 +158,31 @@ class Episode:
         """Freeze the episode and score it; no tool call is accepted afterwards."""
         async with self._lock:
             self._finished = True
-            result = await self.backend.evaluate(self.world)
-        hold = result["hold_samples"]
-        success = bool(hold) and len(hold) == result["sample_count"] and all(hold)
+            cfg, task = self.evaluator, self.layout.task
+            evidence = await self.backend.evaluate(
+                self.world, carry=cfg.carry and task == "lift", samples=cfg.hold_samples
+            )
+        scored = score(task, evidence, self.physical_commands, cfg)
         state = {
-            "task": self.layout.task,
+            "task": task,
             "seed": self.layout.seed,
             "simulator": "Newton SolverMuJoCo",
-            "success": success,
-            "hold_samples": hold,
-            "hold_duration_sec": result["hold_duration_sec"],
-            "cube_world_position": [float(v) for v in result["cube_position"]],
-            "tcp_pose": pose(result["tcp_position"], result["tcp_quat_xyzw"]),
+            "evaluator": cfg.name,
+            "success": scored["checks"]["task_condition"],
+            "checks": scored["checks"],
+            "metrics": scored["metrics"],
+            "hold_samples": evidence["hold_samples"],
+            "hold_duration_sec": evidence["hold_duration_sec"],
+            "cube_world_position": [float(v) for v in evidence["cube_position"]],
+            "tcp_pose": pose(evidence["tcp_position"], evidence["tcp_quat_xyzw"]),
             "observation_id": self.observation_id,
             "physical_commands": self.physical_commands,
         }
         if self.layout.goal_position is not None:
             state["reach_goal"] = pose(self.layout.goal_position, self.layout.goal_quat_xyzw)
-        physical = success and self.physical_commands > 0 and state["hold_duration_sec"] >= 0.5
         return {
-            "reward": float(physical),
-            "rewards": {"reward": float(physical), "physical_success": float(success)},
+            "reward": scored["reward"],
+            "rewards": {"reward": scored["reward"], "physical_success": float(state["success"])},
             "evaluator_state": state,
         }
 

@@ -14,9 +14,11 @@ from __future__ import annotations
 import argparse
 import asyncio
 import base64
+import contextlib
 import json
 import socket
 import time
+from collections import Counter
 from pathlib import Path
 
 import numpy as np
@@ -24,6 +26,7 @@ from aiohttp import web
 from scipy.spatial.transform import Rotation
 
 from .client import RobotClient
+from .evaluator import EVALUATORS, V2, EvaluatorConfig
 from .sim.scene import DOWN
 
 
@@ -32,7 +35,7 @@ def _rotation(pose: dict) -> Rotation:
     return Rotation.from_quat([x, y, z, w])
 
 
-class _Driver:
+class Driver:
     """Tracks the newest observation id and measured TCP across tool calls."""
 
     def __init__(self, client: RobotClient, episode_id: str):
@@ -93,14 +96,14 @@ class _Driver:
         )
 
 
-async def reach_expert(driver: _Driver) -> None:
+async def reach_expert(driver: Driver) -> None:
     await driver.observe()
     goal = driver.task["goal_tcp_pose"]
     await driver.move_to_pose(goal["position_m"], _rotation(goal))
     await driver.observe()
 
 
-async def lift_expert(driver: _Driver) -> None:
+async def lift_expert(driver: Driver) -> None:
     await driver.observe()
     cube = await driver.client.privileged(driver.episode_id)
     position = np.asarray(cube["cube_position"])
@@ -122,13 +125,13 @@ async def lift_expert(driver: _Driver) -> None:
 EXPERTS = {"reach_pose": reach_expert, "lift": lift_expert}
 
 
-async def run_episode(client: RobotClient, task: str, seed: int, image_dir: Path | None = None) -> dict:
+async def run_episode(client: RobotClient, task: str, policy, seed: int, image_dir: Path | None = None) -> dict:
     started = time.perf_counter()
     episode = await client.start(task, seed)
-    driver = _Driver(client, episode["episode_id"])
+    driver = Driver(client, episode["episode_id"])
     error = None
     try:
-        await EXPERTS[task](driver)
+        await policy(driver)
     except Exception as exc:  # recorded; the episode is still scored
         error = f"{type(exc).__name__}: {exc}"
     result = await client.finish(episode["episode_id"])
@@ -136,62 +139,90 @@ async def run_episode(client: RobotClient, task: str, seed: int, image_dir: Path
         image_dir.mkdir(parents=True, exist_ok=True)
         for image in driver.last_images:
             (image_dir / f"{task}-{seed:04d}-{image['camera']}.png").write_bytes(base64.b64decode(image["data"]))
+    state = result["evaluator_state"]
     return {
         "task": task,
         "seed": seed,
         "reward": result["reward"],
-        "physical_commands": result["evaluator_state"]["physical_commands"],
-        "hold_samples": result["evaluator_state"]["hold_samples"],
+        "task_condition": state["checks"]["task_condition"],
+        "failed_checks": [name for name, ok in state["checks"].items() if not ok],
+        "metrics": state["metrics"],
+        "physical_commands": state["physical_commands"],
         "receipt_status": [r["status"] for r in driver.receipts],
         "error": error,
         "wall_sec": round(time.perf_counter() - started, 3),
     }
 
 
-async def evaluate(args) -> dict:
-    lo, hi = (int(v) for v in args.seeds.split(":"))
-    runner = worker = None
-    base_url = args.server
-    if base_url is None:
-        from .server import RobotServer, SimWorker
+@contextlib.asynccontextmanager
+async def local_server(world_count: int, device=None, evaluator: EvaluatorConfig = V2):
+    """In-process simulator + HTTP server with privileged endpoints; yields its base URL."""
+    from .server import RobotServer, SimWorker
 
-        worker = SimWorker(args.world_count, device=args.device)
-        await asyncio.to_thread(worker.start)
-        runner = web.AppRunner(RobotServer(worker, allow_privileged=True).app())
-        await runner.setup()
+    worker = SimWorker(world_count, device=device)
+    await asyncio.to_thread(worker.start)
+    runner = web.AppRunner(RobotServer(worker, evaluator=evaluator, allow_privileged=True).app())
+    await runner.setup()
+    try:
         with socket.socket() as sock:
             sock.bind(("127.0.0.1", 0))
             port = sock.getsockname()[1]
         await web.TCPSite(runner, "127.0.0.1", port).start()
-        base_url = f"http://127.0.0.1:{port}"
-    client = RobotClient(base_url)
-    semaphore = asyncio.Semaphore(args.concurrency)
+        yield f"http://127.0.0.1:{port}"
+    finally:
+        await runner.cleanup()
+        worker.stop()
+
+
+async def run_seeds(client: RobotClient, task: str, policy, seeds, *, concurrency=64, image_dir=None, save_images=0):
+    semaphore = asyncio.Semaphore(concurrency)
+    first = min(seeds)
 
     async def one(seed):
         async with semaphore:
-            image_dir = args.output / "images" if args.output and seed < lo + args.save_images else None
-            return await run_episode(client, args.task, seed, image_dir)
+            images = image_dir if image_dir is not None and seed < first + save_images else None
+            return await run_episode(client, task, policy, seed, images)
 
-    try:
-        started = time.perf_counter()
-        episodes = await asyncio.gather(*(one(seed) for seed in range(lo, hi)))
-        wall = time.perf_counter() - started
-        stats = await client.stats()
-    finally:
-        await client.close()
-        if runner is not None:
-            await runner.cleanup()
-            worker.stop()
-    summary = {
-        "task": args.task,
+    return await asyncio.gather(*(one(seed) for seed in seeds))
+
+
+def summarize(task: str, episodes: list[dict]) -> dict:
+    return {
+        "task": task,
         "episodes": len(episodes),
         "success_rate": float(np.mean([e["reward"] for e in episodes])),
+        "task_condition_rate": float(np.mean([e["task_condition"] for e in episodes])),
         "errors": sum(e["error"] is not None for e in episodes),
         "mean_physical_commands": float(np.mean([e["physical_commands"] for e in episodes])),
-        "wall_sec": round(wall, 2),
-        "server": {k: stats[k] for k in ("world_count", "frames", "mean_step_ms", "renders", "mean_render_ms")},
         "failed_seeds": [e["seed"] for e in episodes if e["reward"] != 1.0],
+        "failed_checks": dict(Counter(name for e in episodes for name in e["failed_checks"])),
     }
+
+
+async def evaluate(args) -> dict:
+    lo, hi = (int(v) for v in args.seeds.split(":"))
+    async with contextlib.AsyncExitStack() as stack:
+        base_url = args.server or await stack.enter_async_context(
+            local_server(args.world_count, args.device, EVALUATORS[args.evaluator])
+        )
+        client = RobotClient(base_url)
+        stack.push_async_callback(client.close)
+        started = time.perf_counter()
+        image_dir = args.output / "images" if args.output else None
+        episodes = await run_seeds(
+            client,
+            args.task,
+            EXPERTS[args.task],
+            range(lo, hi),
+            concurrency=args.concurrency,
+            image_dir=image_dir,
+            save_images=args.save_images,
+        )
+        wall = time.perf_counter() - started
+        stats = await client.stats()
+    summary = summarize(args.task, episodes)
+    summary["wall_sec"] = round(wall, 2)
+    summary["server"] = {k: stats[k] for k in ("world_count", "frames", "mean_step_ms", "renders", "mean_render_ms")}
     if args.output:
         args.output.mkdir(parents=True, exist_ok=True)
         (args.output / f"{args.task}-episodes.jsonl").write_text("".join(json.dumps(e) + "\n" for e in episodes))
@@ -207,6 +238,7 @@ def main():
     parser.add_argument("--server", default=None, help="existing server URL; default starts one in-process")
     parser.add_argument("--world-count", type=int, default=64)
     parser.add_argument("--device", default=None)
+    parser.add_argument("--evaluator", choices=sorted(EVALUATORS), default="v2")
     parser.add_argument("--output", type=Path, default=None)
     parser.add_argument("--save-images", type=int, default=4, help="save final images of the first N seeds")
     args = parser.parse_args()

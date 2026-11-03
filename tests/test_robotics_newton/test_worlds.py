@@ -38,9 +38,12 @@ def test_worlds_track_commands_independently():
     settle(worlds, [0])
     assert worlds.snapshot([0])[0]["gripper_width"] < 0.005
 
-    worlds.begin_evaluate([1])
+    worlds.begin_evaluate([1], [True], [10])
     settle(worlds, [1])
-    assert worlds.snapshot([1])[0]["hold_samples"] == [False] * 10  # cube still on the table
+    evidence = worlds.snapshot([1])[0]
+    assert evidence["hold_samples"] == [False] * 10  # cube still on the table
+    assert evidence["grasp_samples"] == [False] * 10
+    assert evidence["max_cube_launch_speed"] < 0.1 and evidence["max_penetration"] < 0.002
 
     images = worlds.render([0, 2])
     assert set(images) == {0, 2}

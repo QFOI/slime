@@ -22,6 +22,7 @@ FINGER_OPEN = 0.04  # per finger [m]; full opening 0.08 m
 
 # One world's layout, verified against the finalized model in build_model().
 TCP_BODY, HAND_BODY, CUBE_BODY = 11, 10, 14
+LEFT_FINGER_BODY, RIGHT_FINGER_BODY = 12, 13
 BODIES_PER_WORLD, COORDS_PER_WORLD, DOFS_PER_WORLD = 15, 16, 15
 ARM_COORDS, ROBOT_COORDS = 7, 9
 
@@ -166,7 +167,12 @@ def build_model(world_count: int, cfg: SceneConfig, device=None) -> tuple[newton
         if total != per_world * world_count:
             raise RuntimeError(f"Unexpected {name} layout: {total} != {per_world} x {world_count}")
     labels = model.body_label
-    if not (labels[TCP_BODY].endswith("fr3_hand_tcp") and labels[HAND_BODY].endswith("fr3_hand")):
+    if not (
+        labels[TCP_BODY].endswith("fr3_hand_tcp")
+        and labels[HAND_BODY].endswith("fr3_hand")
+        and labels[LEFT_FINGER_BODY].endswith("fr3_leftfinger")
+        and labels[RIGHT_FINGER_BODY].endswith("fr3_rightfinger")
+    ):
         raise RuntimeError("Franka body order changed; update TCP_BODY/HAND_BODY")
     if ik_model.joint_coord_count != ROBOT_COORDS:
         raise RuntimeError("IK model must contain only the robot")

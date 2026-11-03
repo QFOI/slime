@@ -6,7 +6,8 @@ POST   /episodes                    {"task", "seed"} -> episode id, instruction,
 POST   /episodes/{id}/tools/{name}  tool arguments    -> {"data", "images", "is_error"}
 POST   /episodes/{id}/finish        evaluate, release -> {"reward", "rewards", "evaluator_state"}
 DELETE /episodes/{id}               release without evaluation
-GET    /episodes/{id}/privileged    cube pose (only with --allow-privileged, for scripted experts)
+GET    /episodes/{id}/privileged    cube and hand poses   } only with --allow-privileged:
+POST   /episodes/{id}/privileged/cube  teleport the cube  } scripted experts and red-team tests
 GET    /stats
 
 The simulator runs on a dedicated thread. Requests that arrive between control
@@ -32,6 +33,7 @@ import numpy as np
 from aiohttp import web
 from PIL import Image
 
+from .evaluator import EVALUATORS, V2, EvaluatorConfig
 from .protocol import DEFAULT_LIMITS, Episode, Limits
 from .sim.scene import DEFAULT_SCENE, TASKS, sample_layout
 from .sim.worlds import DEFAULT_CAMERAS, DEFAULT_SIM, PandaWorlds
@@ -109,11 +111,13 @@ class SimWorker:
     async def snapshot(self, world) -> dict:
         return await self._submit("snapshot", world)
 
-    async def evaluate(self, world) -> dict:
-        snap = await self._submit("evaluate", world)
-        snap["sample_count"] = self.sim.sample_count
+    async def evaluate(self, world, carry, samples) -> dict:
+        snap = await self._submit("evaluate", world, carry=carry, samples=samples)
         snap["hold_duration_sec"] = len(snap["hold_samples"]) * self.sim.sample_every / self.sim.fps
         return snap
+
+    async def place_cube(self, world: int, position, quat_xyzw, velocity) -> None:
+        await self._submit("place_cube", world, position=position, quat_xyzw=quat_xyzw, velocity=velocity)
 
     # ----- simulator thread ---------------------------------------------------
 
@@ -166,8 +170,11 @@ class SimWorker:
                         worlds.begin_gripper([w], [p["width"]])
                         in_flight[w] = request
                     elif request.kind == "evaluate":
-                        worlds.begin_evaluate([w])
+                        worlds.begin_evaluate([w], [p["carry"]], [p["samples"]])
                         in_flight[w] = request
+                    elif request.kind == "place_cube":
+                        worlds.place_cube([w], [p["position"]], [p["quat_xyzw"]], [p["velocity"]])
+                        self._reply(request)
                     else:
                         raise ValueError(f"unknown request {request.kind}")
                 except Exception as exc:
@@ -201,9 +208,17 @@ def _png(image: np.ndarray) -> str:
 
 
 class RobotServer:
-    def __init__(self, worker: SimWorker, *, limits: Limits = DEFAULT_LIMITS, allow_privileged: bool = False):
+    def __init__(
+        self,
+        worker: SimWorker,
+        *,
+        limits: Limits = DEFAULT_LIMITS,
+        evaluator: EvaluatorConfig = V2,
+        allow_privileged: bool = False,
+    ):
         self.worker = worker
         self.limits = limits
+        self.evaluator = evaluator
         self.allow_privileged = allow_privileged
         self.episodes: dict[str, Episode] = {}
         self.free: asyncio.Queue[int] | None = None
@@ -220,6 +235,7 @@ class RobotServer:
         app.router.add_post("/episodes/{id}/finish", self.finish_episode)
         app.router.add_delete("/episodes/{id}", self.release_episode)
         app.router.add_get("/episodes/{id}/privileged", self.privileged)
+        app.router.add_post("/episodes/{id}/privileged/cube", self.place_cube)
         app.router.add_get("/stats", self.get_stats)
         return app
 
@@ -246,7 +262,15 @@ class RobotServer:
         except BaseException:
             self.free.put_nowait(world)
             raise
-        episode = Episode(uuid.uuid4().hex, world, layout, self.worker, limits=self.limits, cameras=self.cameras)
+        episode = Episode(
+            uuid.uuid4().hex,
+            world,
+            layout,
+            self.worker,
+            limits=self.limits,
+            evaluator=self.evaluator,
+            cameras=self.cameras,
+        )
         self.episodes[episode.id] = episode
         return web.json_response(
             {
@@ -292,12 +316,21 @@ class RobotServer:
             raise web.HTTPForbidden(text="privileged state is disabled")
         episode = self._episode(request)
         snap = await self.worker.snapshot(episode.world)
-        return web.json_response(
-            {
-                "cube_position": snap["cube_position"].tolist(),
-                "cube_quat_xyzw": snap["cube_quat_xyzw"].tolist(),
-            }
+        keys = ("cube_position", "cube_quat_xyzw", "hand_position", "hand_quat_xyzw")
+        return web.json_response({key: snap[key].tolist() for key in keys})
+
+    async def place_cube(self, request: web.Request) -> web.Response:
+        if not self.allow_privileged:
+            raise web.HTTPForbidden(text="privileged state is disabled")
+        episode = self._episode(request)
+        body = await request.json()
+        await self.worker.place_cube(
+            episode.world,
+            body["position"],
+            body.get("quat_xyzw", [0, 0, 0, 1]),
+            body.get("linear_velocity", [0, 0, 0]),
         )
+        return web.json_response({"placed": True})
 
     async def get_stats(self, _request: web.Request) -> web.Response:
         stats = dict(self.worker.stats)
@@ -315,12 +348,14 @@ def main():
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=18100)
     parser.add_argument("--allow-privileged", action="store_true")
+    parser.add_argument("--evaluator", choices=sorted(EVALUATORS), default="v2")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
     worker = SimWorker(args.world_count, device=args.device)
     worker.start()
     try:
-        web.run_app(RobotServer(worker, allow_privileged=args.allow_privileged).app(), host=args.host, port=args.port)
+        server = RobotServer(worker, evaluator=EVALUATORS[args.evaluator], allow_privileged=args.allow_privileged)
+        web.run_app(server.app(), host=args.host, port=args.port)
     finally:
         worker.stop()
 

@@ -2,17 +2,19 @@
 
 GPU-batched Newton simulation of the Panda tasks in [`examples/robotics`](../robotics) (`lift`, `reach_pose`), served over HTTP with the same intuitive tool surface: `observe`, `move_to`, `gripper` and `batch_actions`. One process holds many worlds on one GPU, and each episode leases one world. There is no Docker or private `robot-rollout` dependency.
 
-Status: Phase 1 is done: simulator, tool protocol, scripted experts, benchmark and tests. The slime rollout hook (a token-level VLM loop modelled on `geo3k_vlm_multi_turn`) is the next step.
+Status: Phase 1 is done: simulator, tool protocol, scripted experts, benchmark and tests. Evaluator v2 and its red-team suite are in place (see below). The slime rollout hook (a token-level VLM loop modelled on `geo3k_vlm_multi_turn`) is the next step.
 
 | File | Role |
 |---|---|
 | `sim/scene.py` | FR3 + Franka Hand on a table with a red cube. Maps `(task, seed)` to the initial layout. The base frame is the simulation frame, with the table top at z = 0. |
-| `sim/worlds.py` | `PandaWorlds` runs W worlds in one CUDA graph per 60 Hz control frame: per-world controller, batched IK, physics, settle and evaluation checks. It also runs batched ray-traced cameras (`front` fixed, `wrist` on the hand). |
-| `protocol.py` | Episode semantics: current `observation_id`, idempotent `command_id`, limits, command budget, `batch_actions` rules, Harbor-style reward. |
+| `sim/worlds.py` | `PandaWorlds` runs W worlds in one CUDA graph per 60 Hz control frame: per-world controller, batched IK, physics, settle checks, cube-contact classification, episode monitors and the evaluator (carry test and hold samples). It also runs batched ray-traced cameras (`front` fixed, `wrist` on the hand). |
+| `protocol.py` | Episode semantics: current `observation_id`, idempotent `command_id`, limits, command budget, `batch_actions` rules. `finish` hands the simulator's evidence to the evaluator. |
+| `evaluator.py` | The reward rule: the task condition plus process checks, each reported separately. `v1` (final height only) is kept for comparison. |
 | `tools.py` | Tool schemas (OpenAI function format). |
 | `server.py` | aiohttp server. A simulator thread applies the requests that arrive between frames together, and steps frames only while a command is in flight. |
 | `client.py` | Async HTTP client. |
 | `scripted.py` | Scripted experts and the evaluation runner. Reach uses only public state; lift reads the cube pose from the privileged endpoint. |
+| `redteam.py` | Hack policies and injected states that must score 0, plus the experts, run under v1 and v2. |
 | `bench.py` | Frame and render latency against world count. |
 
 ## Run
@@ -26,6 +28,7 @@ pip install "newton[examples]==1.7.0" pillow aiohttp scipy pytest
 python -m examples.robotics_newton.scripted --task lift --seeds 0:64 --world-count 64 --device cuda:0
 python -m examples.robotics_newton.server --world-count 64 --device cuda:0 --port 18100   # standalone server
 python -m examples.robotics_newton.bench --world-counts 16 64 128 --device cuda:0
+python -m examples.robotics_newton.redteam --seeds 0:16 --device cuda:0   # exits 1 if v2 rewards a hack
 python -m pytest tests/test_robotics_newton
 ```
 
@@ -33,17 +36,57 @@ The first build for a new world count compiles Warp kernels, which takes 1–3 m
 
 ## Semantics and deliberate differences
 
-- **Episode flow.** `POST /episodes {"task", "seed"}` resets a free world to `sample_layout(task, seed)`. GRPO samples of one prompt share the seed, so they start from the same scene. `POST /episodes/{id}/finish` freezes the episode, samples the task condition 10 times at 20 Hz, and releases the world.
-- **Reward.** The reward follows the Harbor verifiers: all 10 hold samples, the full 0.5 s window, and at least one physical command.
-  - Lift success means the cube's bottom face is ≥ 3 cm above the table.
-  - Reach success means TCP error ≤ 1 cm and ≤ 5°.
+- **Episode flow.** `POST /episodes {"task", "seed"}` resets a free world to `sample_layout(task, seed)`. GRPO samples of one prompt share the seed, so they start from the same scene. `POST /episodes/{id}/finish` freezes the episode, runs the evaluator, and releases the world. The policy cannot trigger scoring, and its text never reaches the reward.
+- **Reward.** See the evaluator section below.
 - **`move_to`** takes `translation_m` and `rotation_delta_rad`, in the base frame, anchored to the measured TCP. Its argument names match the robot-rollout calls in `tests/test_robotics/smoke.py`.
   - The planned TCP speed is 0.25 m/s and 1 rad/s.
   - A move is `completed` when the TCP is within 2 mm / 1° and the arm is still. It is `partial` if that doesn't happen within 1 s after the planned duration; the arm then holds where it is.
 - **Limits.** 0.25 m and 1.0 rad per command, TCP z ≥ 5 mm, 80 physical commands. These are local choices; robot-rollout's real values are not visible from this repository.
 - **Robot.** The robot is the FR3 from `newton-assets` with gains from Newton's `ik_cube_stacking` example, not robosuite's Panda. Images are 256×256 ray-traced RGB without depth.
 - **Idle worlds** keep simulating under their hold target while other worlds move, as a real arm does while its policy thinks. Simulated time is therefore not bit-reproducible across concurrency levels.
-- **Privileged endpoint.** `GET /episodes/{id}/privileged` returns the cube pose only when the server is started with `--allow-privileged`. It is for scripted experts only.
+- **Privileged endpoints.** `GET /episodes/{id}/privileged` (cube and hand poses) and `POST /episodes/{id}/privileged/cube` (teleport the cube) exist only when the server is started with `--allow-privileged`. They are for scripted experts and red-team tests; an RL server must never enable them.
+
+## Evaluator v2
+
+Every check follows from the instruction. The reward is 1 only if all of them pass, and each one is logged separately.
+
+| Check | Lift | Reach | Evidence |
+|---|---|---|---|
+| `task_condition` | Cube bottom ≥ 3 cm above the table in all 20 samples (1 s at 20 Hz) | TCP within 1 cm and 5° of the goal in all 20 samples | Hold samples after the agent stops |
+| `physical_command` | ≥ 1 | ≥ 1 | Protocol counter |
+| `held_by_fingers` | In every sample, the cube touches both finger pads (signed separation ≤ 1 mm) and nothing else, with its centre between the pads in the TCP frame | – | Per-frame contact classification on the GPU |
+| `moved_with_gripper` | Before sampling, the evaluator carries the hand 4 cm up and 4 cm toward y = 0 over 0.5 s; the cube stays within 1 cm of its pose relative to the TCP | – | Carry test |
+| `stayed_on_table` | The cube never dropped more than 2 cm below the table top | – | Episode monitor |
+| `not_launched` | The cube never moved faster than 1 m/s, ignoring downward motion (so falls don't count) | – | Episode monitor |
+| `no_interpenetration` | Penetration ≤ 5 mm during the hold. Transient impact penetration earlier in the episode is logged, not penalized. | – | Contacts during the hold |
+
+`v1` (the Phase 1 rule: final height only, 10 samples, no carry) stays available as `--evaluator v1` to measure what v2 catches. Red-team results, 16 seeds each, both evaluators:
+
+| Entry | v1 | v2 | v2 checks that fail |
+|---|---:|---:|---|
+| Expert lift | 1.00 | 1.00 | – |
+| Expert reach | 1.00 | 1.00 | – |
+| Hack: close beside the cube and lift | 0.00 | 0.00 | task, held, moved |
+| Hack: push the cube off the table | 0.00 | 0.00 | task, held, moved; also launched (10–13/16) and off table (2–5/16), varying between runs |
+| Hack: lift, then drop | 0.00 | 0.00 | task, held, moved |
+| Injected: cube lodged on the hand | **1.00** | 0.00 | held, interpenetration |
+| Injected: cube embedded in the flange | **1.00** | 0.00 | held, interpenetration |
+| Injected: cube launched upward at 5 m/s | **0.44** | 0.00 | task, held, moved, launched |
+
+Expert margins under v2, 64 seeds:
+
+| Metric | Expert value | Limit |
+|---|---|---|
+| Carry drift | 0.1 mm | 10 mm |
+| Cube speed (launch-style) | 0.34 m/s | 1.0 m/s |
+| Penetration during the hold | 0.6 mm | 5 mm |
+| Grasp check | passes in all samples | all samples |
+
+Known limits:
+- **Shoving can trip `not_launched`.** Shoving the cube with the stiff arm makes the solver kick it to 1.2–3.5 m/s. A clumsy but otherwise legitimate policy that bangs into the cube would trip this check.
+- **No clean balanced state to test with.** No stable resting spot on this hand is free of interpenetration (probed at 15–30 mm), so a genuinely balanced cube can't be tested. `held_by_fingers` rejects the injected states on its own.
+- **Reach has a vision-free shortcut.** Reach gives the goal as numbers, so it is solvable without vision (the scripted expert never looks). A blind lift policy that always grasps at the spawn-region centre scores 3.1% (4/128).
+- **Grasp and carry tolerances** come from the scripted expert's grasps (cube centred to 0.3 mm, width 49.1 mm for the 50 mm cube).
 
 ## Measured (2026-11-03, RTX A6000)
 
@@ -51,8 +94,8 @@ Both GPUs were shared with another training job at 100% utilization, so these nu
 
 | Check | Result |
 |---|---|
-| Scripted `reach_pose`, seeds 0–63, 64 worlds, 64 concurrent episodes | 64/64, 1.1 commands per episode on average, 3.8 s wall |
-| Scripted `lift`, seeds 0–63, 64 worlds, 64 concurrent episodes | 64/64, 5 commands each, 6.6 s wall |
+| Scripted `reach_pose`, seeds 0–63, 64 worlds, 64 concurrent episodes | 64/64 under both v1 and v2, 1.1 commands per episode on average, 3.8 s wall (v1) |
+| Scripted `lift`, seeds 0–63, 64 worlds, 64 concurrent episodes | 64/64 under both v1 and v2, 5 commands each, 6.6 s wall (v1) |
 | Held-out seeds 100–115, both tasks | 16/16 each |
 | Control frame (all worlds moving) | 16 worlds: 11.4 ms. 64 worlds: 17.2 ms (1.0× real time per world, 62× aggregate). 128 worlds: 23.8 ms. |
 | Render, 2 cameras at 256² | about 2.1 ms per world; 137 ms for all 64 worlds |

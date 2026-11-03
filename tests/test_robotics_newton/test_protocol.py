@@ -15,11 +15,11 @@ from examples.robotics_newton.sim.scene import sample_layout
 class FakeBackend:
     """Kinematic stand-in: moves complete exactly, the hold result is scripted."""
 
-    def __init__(self, hold=(True,) * 10):
+    def __init__(self, hold=True):
         self.tcp = np.array([0.5, 0.0, 0.2])
         self.quat = np.array([1.0, 0.0, 0.0, 0.0])  # xyzw: 180 deg about x, pointing down
         self.width = 0.08
-        self.hold = list(hold)
+        self.hold = hold
         self.moves = []
 
     def _snap(self, status="completed"):
@@ -49,8 +49,19 @@ class FakeBackend:
     async def snapshot(self, world):
         return self._snap()
 
-    async def evaluate(self, world):
-        return {**self._snap(), "hold_samples": self.hold, "sample_count": 10, "hold_duration_sec": 0.5}
+    async def evaluate(self, world, carry, samples):
+        self.evaluated = {"carry": carry, "samples": samples}
+        return {
+            **self._snap(),
+            "hold_samples": [self.hold] * samples,
+            "grasp_samples": [True] * samples,
+            "max_drift": 0.0,
+            "hold_penetration": 0.0,
+            "min_cube_z": 0.025,
+            "max_cube_launch_speed": 0.3,
+            "max_penetration": 0.0,
+            "hold_duration_sec": samples * 3 / 60,
+        }
 
 
 def make_episode(task="lift", **kwargs):
@@ -142,18 +153,17 @@ def test_batch_actions_rules_and_execution():
     asyncio.run(run())
 
 
-@pytest.mark.parametrize(
-    "hold, physical, reward",
-    [((True,) * 10, True, 1.0), ((True,) * 9 + (False,), True, 0.0), ((True,) * 10, False, 0.0)],
-)
-def test_reward_follows_harbor_verifier(hold, physical, reward):
+@pytest.mark.parametrize("hold, physical, reward", [(True, True, 1.0), (False, True, 0.0), (True, False, 0.0)])
+def test_finish_scores_simulator_evidence(hold, physical, reward):
     async def run():
-        episode, _ = make_episode(hold=hold)
+        episode, backend = make_episode(hold=hold)
         obs = (await episode.call("observe", {})).data["observation_id"]
         if physical:
             await episode.call("move_to", move(obs, "a"))
         result = await episode.finish()
         assert result["reward"] == reward
+        assert backend.evaluated == {"carry": True, "samples": 20}  # v2 runs the lift carry test
+        assert set(result["evaluator_state"]["checks"]) >= {"task_condition", "held_by_fingers", "not_launched"}
         assert (await episode.call("observe", {})).is_error  # frozen after finish
 
     asyncio.run(run())

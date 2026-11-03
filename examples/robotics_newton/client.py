@@ -35,5 +35,9 @@ class RobotClient:
     async def privileged(self, episode_id: str) -> dict:
         return await self._request("GET", f"/episodes/{episode_id}/privileged")
 
+    async def place_cube(self, episode_id: str, position, quat_xyzw=(0, 0, 0, 1), linear_velocity=(0, 0, 0)) -> dict:
+        body = {"position": list(position), "quat_xyzw": list(quat_xyzw), "linear_velocity": list(linear_velocity)}
+        return await self._request("POST", f"/episodes/{episode_id}/privileged/cube", json=body)
+
     async def stats(self) -> dict:
         return await self._request("GET", "/stats")

@@ -1,8 +1,9 @@
 """Batched Panda worlds on one GPU: command state machine, IK, physics, cameras.
 
 One control frame (60 Hz) is one CUDA graph over all worlds: per-world
-controller, batched IK, joint-target write, collision + physics substeps, and a
-status kernel that decides when each world's command has settled. The host
+controller, batched IK, joint-target write, collision, cube-contact
+classification, physics substeps, a status kernel that decides when each
+world's command has settled, episode monitors, and the evaluator. The host
 starts commands with small begin_* kernels between frames and reads back one
 int per world after each frame. Worlds without a command hold their last
 commanded pose while time advances for the others, as a real arm would while
@@ -29,6 +30,8 @@ from .scene import (
     DOFS_PER_WORLD,
     FINGER_OPEN,
     HAND_BODY,
+    LEFT_FINGER_BODY,
+    RIGHT_FINGER_BODY,
     ROBOT_COORDS,
     TCP_BODY,
     Layout,
@@ -49,6 +52,9 @@ PARTIAL = wp.constant(2)
 EVAL_LIFT = wp.constant(0)
 EVAL_REACH = wp.constant(1)
 
+CUBE_COORD = ROBOT_COORDS  # first coordinate of the cube's free joint in a world
+CUBE_DOF = ROBOT_COORDS  # the arm and fingers have one DOF per coordinate
+
 
 @dataclasses.dataclass(frozen=True)
 class SimConfig:
@@ -64,9 +70,20 @@ class SimConfig:
     settle_timeout: float = 1.0
     gripper_min_time: float = 0.3
     gripper_timeout: float = 1.5
-    # Evaluation hold: sample_count samples every sample_every frames (20 Hz, 0.5 s).
+    # Evaluation samples every sample_every frames (20 Hz); the count is per evaluation.
     sample_every: int = 3
-    sample_count: int = 10
+    # Grasp check in each sample: the cube touches both finger pads (signed
+    # separation <= touch_tol) and nothing else, with its centre inside this
+    # TCP-frame box (x along the pad width, y along closing, z toward the fingertips).
+    touch_tol: float = 0.001
+    pad_half_x: float = 0.02
+    pad_half_y: float = 0.012
+    pad_z_min: float = -0.035
+    pad_z_max: float = 0.02
+    # Carry test before the hold samples: move up and toward y = 0 over carry_time.
+    carry_up: float = 0.04
+    carry_side: float = 0.04
+    carry_time: float = 0.5
     use_graph: bool = True
 
 
@@ -111,10 +128,51 @@ def look_at(eye, target, up) -> wp.transformf:
     return wp.transformf(wp.vec3f(*eye.tolist()), wp.quat_from_matrix(wp.mat33(*rotation.flatten().tolist())))
 
 
+@wp.struct
+class Monitors:
+    """Per-world physical evidence. Contacts are refreshed every frame; the rest spans the episode."""
+
+    touch_left: wp.array(dtype=int)
+    touch_right: wp.array(dtype=int)
+    touch_other: wp.array(dtype=int)
+    frame_min_separation: wp.array(dtype=float)
+    min_cube_z: wp.array(dtype=float)
+    # Cube speed ignoring downward motion: throws and solver launches, not falls.
+    max_cube_launch_speed: wp.array(dtype=float)
+    max_penetration: wp.array(dtype=float)
+
+
+@wp.struct
+class Evaluation:
+    """Per-world evaluator state: task, carry test and hold samples."""
+
+    kind: wp.array(dtype=int)
+    goal_pos: wp.array(dtype=wp.vec3)
+    goal_rot: wp.array(dtype=wp.quat)
+    frames: wp.array(dtype=int)
+    samples: wp.array(dtype=int)
+    count: wp.array(dtype=int)
+    task_bits: wp.array(dtype=int)
+    grasp_bits: wp.array(dtype=int)
+    carry_frames: wp.array(dtype=int)
+    carry_start: wp.array(dtype=wp.vec3)
+    carry_offset: wp.array(dtype=wp.vec3)
+    cube_in_tcp_ref: wp.array(dtype=wp.vec3)
+    max_drift: wp.array(dtype=float)
+    hold_penetration: wp.array(dtype=float)
+
+
 @wp.func
 def quat_distance(a: wp.quat, b: wp.quat) -> float:
     d = wp.abs(a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3])
     return 2.0 * wp.acos(wp.min(d, 1.0))
+
+
+@wp.func
+def cube_in_tcp(body_q: wp.array(dtype=wp.transform), w: int) -> wp.vec3:
+    tcp = body_q[w * BODIES_PER_WORLD + TCP_BODY]
+    cube = wp.transform_get_translation(body_q[w * BODIES_PER_WORLD + CUBE_BODY])
+    return wp.transform_point(wp.transform_inverse(tcp), cube)
 
 
 @wp.kernel
@@ -137,11 +195,39 @@ def reset_joints_kernel(
 
 
 @wp.kernel
+def place_cube_kernel(
+    worlds: wp.array(dtype=int),
+    position: wp.array(dtype=wp.vec3),
+    rotation: wp.array(dtype=wp.quat),
+    velocity: wp.array(dtype=wp.vec3),
+    joint_q: wp.array(dtype=float),
+    joint_qd: wp.array(dtype=float),
+):
+    i = wp.tid()
+    w = worlds[i]
+    for k in range(3):
+        joint_q[w * COORDS_PER_WORLD + CUBE_COORD + k] = position[i][k]
+        joint_qd[w * DOFS_PER_WORLD + CUBE_DOF + k] = velocity[i][k]
+        joint_qd[w * DOFS_PER_WORLD + CUBE_DOF + 3 + k] = 0.0
+    for k in range(4):
+        joint_q[w * COORDS_PER_WORLD + CUBE_COORD + 3 + k] = rotation[i][k]
+
+
+@wp.kernel
+def reset_monitors_kernel(worlds: wp.array(dtype=int), body_q: wp.array(dtype=wp.transform), m: Monitors):
+    i = wp.tid()
+    w = worlds[i]
+    m.min_cube_z[w] = wp.transform_get_translation(body_q[w * BODIES_PER_WORLD + CUBE_BODY])[2]
+    m.max_cube_launch_speed[w] = 0.0
+    m.max_penetration[w] = 0.0
+
+
+@wp.kernel
 def reset_world_kernel(
     worlds: wp.array(dtype=int),
-    eval_kind_in: wp.array(dtype=int),
-    goal_pos_in: wp.array(dtype=wp.vec3),
-    goal_rot_in: wp.array(dtype=wp.quat),
+    eval_kind: wp.array(dtype=int),
+    goal_pos: wp.array(dtype=wp.vec3),
+    goal_rot: wp.array(dtype=wp.quat),
     body_q: wp.array(dtype=wp.transform),
     mode: wp.array(dtype=int),
     result: wp.array(dtype=int),
@@ -150,9 +236,7 @@ def reset_world_kernel(
     hold_pos: wp.array(dtype=wp.vec3),
     hold_rot: wp.array(dtype=wp.quat),
     finger_target: wp.array(dtype=float),
-    eval_kind: wp.array(dtype=int),
-    goal_pos: wp.array(dtype=wp.vec3),
-    goal_rot: wp.array(dtype=wp.quat),
+    e: Evaluation,
 ):
     i = wp.tid()
     w = worlds[i]
@@ -164,9 +248,11 @@ def reset_world_kernel(
     result[w] = RUNNING
     elapsed[w] = 0.0
     settle[w] = 0
-    eval_kind[w] = eval_kind_in[i]
-    goal_pos[w] = goal_pos_in[i]
-    goal_rot[w] = goal_rot_in[i]
+    e.kind[w] = eval_kind[i]
+    e.goal_pos[w] = goal_pos[i]
+    e.goal_rot[w] = goal_rot[i]
+    e.count[w] = 0
+    e.samples[w] = 0
 
 
 @wp.kernel
@@ -233,19 +319,35 @@ def begin_gripper_kernel(
 @wp.kernel
 def begin_evaluate_kernel(
     worlds: wp.array(dtype=int),
+    carry: wp.array(dtype=int),
+    samples: wp.array(dtype=int),
+    body_q: wp.array(dtype=wp.transform),
+    hold_pos: wp.array(dtype=wp.vec3),
+    carry_up: float,
+    carry_side: float,
+    carry_frames: int,
     mode: wp.array(dtype=int),
     result: wp.array(dtype=int),
     elapsed: wp.array(dtype=float),
-    eval_frames: wp.array(dtype=int),
-    eval_count: wp.array(dtype=int),
-    eval_bits: wp.array(dtype=int),
+    e: Evaluation,
 ):
     i = wp.tid()
     w = worlds[i]
+    side = carry_side
+    if hold_pos[w][1] > 0.0:
+        side = -carry_side
+    e.frames[w] = 0
+    e.samples[w] = samples[i]
+    e.count[w] = 0
+    e.task_bits[w] = 0
+    e.grasp_bits[w] = 0
+    e.carry_frames[w] = carry_frames * carry[i]
+    e.carry_start[w] = hold_pos[w]
+    e.carry_offset[w] = wp.vec3(0.0, side, carry_up)
+    e.cube_in_tcp_ref[w] = cube_in_tcp(body_q, w)
+    e.max_drift[w] = 0.0
+    e.hold_penetration[w] = 0.0
     elapsed[w] = 0.0
-    eval_frames[w] = 0
-    eval_count[w] = 0
-    eval_bits[w] = 0
     result[w] = RUNNING
     mode[w] = EVALUATE
 
@@ -253,6 +355,7 @@ def begin_evaluate_kernel(
 @wp.kernel
 def control_kernel(
     dt: float,
+    carry_time: float,
     mode: wp.array(dtype=int),
     elapsed: wp.array(dtype=float),
     duration: wp.array(dtype=float),
@@ -260,6 +363,7 @@ def control_kernel(
     start_rot: wp.array(dtype=wp.quat),
     target_pos: wp.array(dtype=wp.vec3),
     target_rot: wp.array(dtype=wp.quat),
+    e: Evaluation,
     hold_pos: wp.array(dtype=wp.vec3),
     hold_rot: wp.array(dtype=wp.quat),
     ik_pos: wp.array(dtype=wp.vec3),
@@ -278,6 +382,11 @@ def control_kernel(
         q = wp.quat_slerp(start_rot[w], target_rot[w], s)
         hold_pos[w] = target_pos[w]
         hold_rot[w] = target_rot[w]
+    elif m == EVALUATE and e.carry_frames[w] > 0:
+        s = wp.min(1.0, elapsed[w] / carry_time)
+        s = s * s * (3.0 - 2.0 * s)
+        p = e.carry_start[w] + e.carry_offset[w] * s
+        hold_pos[w] = e.carry_start[w] + e.carry_offset[w]
     ik_pos[w] = p
     ik_rot[w] = wp.vec4(q[0], q[1], q[2], q[3])
 
@@ -296,6 +405,70 @@ def write_targets_kernel(
 
 
 @wp.kernel
+def clear_contacts_kernel(m: Monitors):
+    w = wp.tid()
+    m.touch_left[w] = 0
+    m.touch_right[w] = 0
+    m.touch_other[w] = 0
+    m.frame_min_separation[w] = 1.0
+
+
+@wp.kernel
+def cube_contacts_kernel(
+    count: wp.array(dtype=int),
+    shape0: wp.array(dtype=int),
+    shape1: wp.array(dtype=int),
+    point0: wp.array(dtype=wp.vec3),
+    point1: wp.array(dtype=wp.vec3),
+    normal: wp.array(dtype=wp.vec3),
+    margin0: wp.array(dtype=float),
+    margin1: wp.array(dtype=float),
+    shape_body: wp.array(dtype=int),
+    body_q: wp.array(dtype=wp.transform),
+    touch_tol: float,
+    m: Monitors,
+):
+    # The collision pipeline also reports nearby pairs, so classify by signed separation.
+    c = wp.tid()
+    if c >= count[0]:
+        return
+    s0 = shape0[c]
+    s1 = shape1[c]
+    if s0 < 0 or s1 < 0:
+        return
+    b0 = shape_body[s0]
+    b1 = shape_body[s1]
+    cube_first = b0 >= 0 and b0 % BODIES_PER_WORLD == CUBE_BODY
+    cube_second = b1 >= 0 and b1 % BODIES_PER_WORLD == CUBE_BODY
+    if not (cube_first or cube_second):
+        return
+    p0 = point0[c]
+    if b0 >= 0:
+        p0 = wp.transform_point(body_q[b0], p0)
+    p1 = point1[c]
+    if b1 >= 0:
+        p1 = wp.transform_point(body_q[b1], p1)
+    separation = wp.dot(normal[c], p1 - p0) - (margin0[c] + margin1[c])
+    cube = b0
+    other = b1
+    if cube_second:
+        cube = b1
+        other = b0
+    w = cube // BODIES_PER_WORLD
+    wp.atomic_min(m.frame_min_separation, w, separation)
+    if separation <= touch_tol:
+        local = -1
+        if other >= 0:
+            local = other % BODIES_PER_WORLD
+        if local == LEFT_FINGER_BODY:
+            wp.atomic_max(m.touch_left, w, 1)
+        elif local == RIGHT_FINGER_BODY:
+            wp.atomic_max(m.touch_right, w, 1)
+        else:
+            wp.atomic_max(m.touch_other, w, 1)
+
+
+@wp.kernel
 def status_kernel(
     body_q: wp.array(dtype=wp.transform),
     joint_qd: wp.array(dtype=float),
@@ -308,12 +481,6 @@ def status_kernel(
     target_rot: wp.array(dtype=wp.quat),
     hold_pos: wp.array(dtype=wp.vec3),
     hold_rot: wp.array(dtype=wp.quat),
-    eval_kind: wp.array(dtype=int),
-    goal_pos: wp.array(dtype=wp.vec3),
-    goal_rot: wp.array(dtype=wp.quat),
-    eval_frames: wp.array(dtype=int),
-    eval_count: wp.array(dtype=int),
-    eval_bits: wp.array(dtype=int),
     position_tol: float,
     rotation_tol: float,
     joint_speed_tol: float,
@@ -321,16 +488,9 @@ def status_kernel(
     settle_timeout: float,
     gripper_min_time: float,
     gripper_timeout: float,
-    sample_every: int,
-    sample_count: int,
-    lift_min_z: float,
-    reach_position_tol: float,
-    reach_rotation_tol: float,
 ):
     w = wp.tid()
     m = mode[w]
-    if m == IDLE:
-        return
     tcp = body_q[w * BODIES_PER_WORLD + TCP_BODY]
     p = wp.transform_get_translation(tcp)
     q = wp.transform_get_rotation(tcp)
@@ -365,24 +525,65 @@ def status_kernel(
         if (elapsed[w] >= gripper_min_time and settle[w] >= settle_frames) or elapsed[w] >= gripper_timeout:
             result[w] = COMPLETED
             mode[w] = IDLE
-    elif m == EVALUATE:
-        eval_frames[w] = eval_frames[w] + 1
-        if eval_frames[w] % sample_every == 0:
-            ok = False
-            if eval_kind[w] == EVAL_LIFT:
-                cube = wp.transform_get_translation(body_q[w * BODIES_PER_WORLD + CUBE_BODY])
-                ok = cube[2] > lift_min_z
-            else:
-                ok = (
-                    wp.length(goal_pos[w] - p) <= reach_position_tol
-                    and quat_distance(goal_rot[w], q) <= reach_rotation_tol
-                )
-            if ok:
-                eval_bits[w] = eval_bits[w] | (1 << eval_count[w])
-            eval_count[w] = eval_count[w] + 1
-            if eval_count[w] >= sample_count:
-                result[w] = COMPLETED
-                mode[w] = IDLE
+
+
+@wp.kernel
+def monitor_kernel(body_q: wp.array(dtype=wp.transform), body_qd: wp.array(dtype=wp.spatial_vector), m: Monitors):
+    w = wp.tid()
+    cube = w * BODIES_PER_WORLD + CUBE_BODY
+    m.min_cube_z[w] = wp.min(m.min_cube_z[w], wp.transform_get_translation(body_q[cube])[2])
+    v = wp.spatial_top(body_qd[cube])
+    m.max_cube_launch_speed[w] = wp.max(m.max_cube_launch_speed[w], wp.length(wp.vec3(v[0], v[1], wp.max(v[2], 0.0))))
+    m.max_penetration[w] = wp.max(m.max_penetration[w], -m.frame_min_separation[w])
+
+
+@wp.kernel
+def evaluate_kernel(
+    body_q: wp.array(dtype=wp.transform),
+    m: Monitors,
+    sample_every: int,
+    lift_min_z: float,
+    reach_position_tol: float,
+    reach_rotation_tol: float,
+    pad_half_x: float,
+    pad_half_y: float,
+    pad_z_min: float,
+    pad_z_max: float,
+    mode: wp.array(dtype=int),
+    result: wp.array(dtype=int),
+    e: Evaluation,
+):
+    w = wp.tid()
+    if mode[w] != EVALUATE:
+        return
+    e.frames[w] = e.frames[w] + 1
+    k = e.frames[w] - e.carry_frames[w]
+    if k <= 0 or k % sample_every != 0:
+        return
+    tcp = body_q[w * BODIES_PER_WORLD + TCP_BODY]
+    task_ok = False
+    if e.kind[w] == EVAL_LIFT:
+        task_ok = wp.transform_get_translation(body_q[w * BODIES_PER_WORLD + CUBE_BODY])[2] > lift_min_z
+    else:
+        task_ok = (
+            wp.length(e.goal_pos[w] - wp.transform_get_translation(tcp)) <= reach_position_tol
+            and quat_distance(e.goal_rot[w], wp.transform_get_rotation(tcp)) <= reach_rotation_tol
+        )
+    rel = cube_in_tcp(body_q, w)
+    between_pads = (
+        wp.abs(rel[0]) <= pad_half_x and wp.abs(rel[1]) <= pad_half_y and rel[2] >= pad_z_min and rel[2] <= pad_z_max
+    )
+    grasp_ok = m.touch_left[w] == 1 and m.touch_right[w] == 1 and m.touch_other[w] == 0 and between_pads
+    if task_ok:
+        e.task_bits[w] = e.task_bits[w] | (1 << e.count[w])
+    if grasp_ok:
+        e.grasp_bits[w] = e.grasp_bits[w] | (1 << e.count[w])
+    e.max_drift[w] = wp.max(e.max_drift[w], wp.length(rel - e.cube_in_tcp_ref[w]))
+    e.hold_penetration[w] = wp.max(e.hold_penetration[w], -m.frame_min_separation[w])
+    e.count[w] = e.count[w] + 1
+    if e.count[w] >= e.samples[w]:
+        result[w] = COMPLETED
+        mode[w] = IDLE
 
 
 @wp.kernel
@@ -413,6 +614,10 @@ def _on_device(method):
             return method(self, *args, **kwargs)
 
     return wrapper
+
+
+def _bits(value: int, count: int) -> list[bool]:
+    return [bool(value >> k & 1) for k in range(count)]
 
 
 class PandaWorlds:
@@ -467,8 +672,13 @@ class PandaWorlds:
         self.start_pos, self.target_pos, self.hold_pos = per_world(wp.vec3), per_world(wp.vec3), per_world(wp.vec3)
         self.start_rot, self.target_rot, self.hold_rot = per_world(wp.quat), per_world(wp.quat), per_world(wp.quat)
         self.finger_target = per_world(float, FINGER_OPEN)
-        self.eval_kind, self.goal_pos, self.goal_rot = per_world(int), per_world(wp.vec3), per_world(wp.quat)
-        self.eval_frames, self.eval_count, self.eval_bits = per_world(int), per_world(int), per_world(int)
+
+        self.monitors = Monitors()
+        for name in Monitors.vars:
+            setattr(self.monitors, name, per_world(int if name.startswith("touch") else float))
+        self.evaluation = Evaluation()
+        for name, var in Evaluation.vars.items():
+            setattr(self.evaluation, name, per_world(var.type.dtype))
 
         # The IK objectives keep references to these arrays; control_kernel writes them.
         self.ik_pos, self.ik_rot = per_world(wp.vec3), per_world(wp.vec4)
@@ -511,12 +721,23 @@ class PandaWorlds:
             self.graph = capture.graph
 
     def _frame(self):
-        sim, n = self.sim, self.world_count
+        sim, scene, n, c = self.sim, self.scene, self.world_count, self.contacts
         wp.launch(
             control_kernel,
             dim=n,
-            inputs=[self.frame_dt, self.mode, self.elapsed, self.duration, self.start_pos, self.start_rot],
-            outputs=[self.target_pos, self.target_rot, self.hold_pos, self.hold_rot, self.ik_pos, self.ik_rot],
+            inputs=[
+                self.frame_dt,
+                sim.carry_time,
+                self.mode,
+                self.elapsed,
+                self.duration,
+                self.start_pos,
+                self.start_rot,
+                self.target_pos,
+                self.target_rot,
+                self.evaluation,
+            ],
+            outputs=[self.hold_pos, self.hold_rot, self.ik_pos, self.ik_rot],
         )
         self.ik_solver.step(self.ik_q, self.ik_q, iterations=sim.ik_iterations)
         wp.launch(
@@ -525,10 +746,29 @@ class PandaWorlds:
             inputs=[self.ik_q, self.finger_target],
             outputs=[self.control.joint_target_q],
         )
-        self.pipeline.collide(self.state_0, self.contacts)
+        self.pipeline.collide(self.state_0, c)
+        wp.launch(clear_contacts_kernel, dim=n, inputs=[self.monitors])
+        wp.launch(
+            cube_contacts_kernel,
+            dim=c.rigid_contact_max,
+            inputs=[
+                c.rigid_contact_count,
+                c.rigid_contact_shape0,
+                c.rigid_contact_shape1,
+                c.rigid_contact_point0,
+                c.rigid_contact_point1,
+                c.rigid_contact_normal,
+                c.rigid_contact_margin0,
+                c.rigid_contact_margin1,
+                self.model.shape_body,
+                self.state_0.body_q,
+                sim.touch_tol,
+                self.monitors,
+            ],
+        )
         for _ in range(sim.substeps):
             self.state_0.clear_forces()
-            self.solver.step(self.state_0, self.state_1, self.control, self.contacts, self.frame_dt / sim.substeps)
+            self.solver.step(self.state_0, self.state_1, self.control, c, self.frame_dt / sim.substeps)
             self.state_0, self.state_1 = self.state_1, self.state_0
         wp.launch(
             status_kernel,
@@ -545,12 +785,6 @@ class PandaWorlds:
                 self.target_rot,
                 self.hold_pos,
                 self.hold_rot,
-                self.eval_kind,
-                self.goal_pos,
-                self.goal_rot,
-                self.eval_frames,
-                self.eval_count,
-                self.eval_bits,
                 sim.position_tol,
                 sim.rotation_tol,
                 sim.joint_speed_tol,
@@ -558,11 +792,26 @@ class PandaWorlds:
                 sim.settle_timeout,
                 sim.gripper_min_time,
                 sim.gripper_timeout,
+            ],
+        )
+        wp.launch(monitor_kernel, dim=n, inputs=[self.state_0.body_q, self.state_0.body_qd, self.monitors])
+        wp.launch(
+            evaluate_kernel,
+            dim=n,
+            inputs=[
+                self.state_0.body_q,
+                self.monitors,
                 sim.sample_every,
-                sim.sample_count,
-                self.scene.cube_half + self.scene.lift_clearance,
-                self.scene.reach_position_tol,
-                self.scene.reach_rotation_tol,
+                scene.cube_half + scene.lift_clearance,
+                scene.reach_position_tol,
+                scene.reach_rotation_tol,
+                sim.pad_half_x,
+                sim.pad_half_y,
+                sim.pad_z_min,
+                sim.pad_z_max,
+                self.mode,
+                self.result,
+                self.evaluation,
             ],
         )
 
@@ -577,8 +826,8 @@ class PandaWorlds:
         for i, layout in enumerate(layouts):
             q[i, :ARM_COORDS] = layout.arm_q
             q[i, ARM_COORDS:ROBOT_COORDS] = FINGER_OPEN
-            q[i, ROBOT_COORDS : ROBOT_COORDS + 3] = layout.cube_position
-            q[i, ROBOT_COORDS + 3 :] = layout.cube_quat_xyzw
+            q[i, CUBE_COORD : CUBE_COORD + 3] = layout.cube_position
+            q[i, CUBE_COORD + 3 :] = layout.cube_quat_xyzw
             if layout.task == "reach_pose":
                 kinds[i] = EVAL_REACH
                 goal_pos[i], goal_rot[i] = layout.goal_position, layout.goal_quat_xyzw
@@ -611,11 +860,28 @@ class PandaWorlds:
                 self.hold_pos,
                 self.hold_rot,
                 self.finger_target,
-                self.eval_kind,
-                self.goal_pos,
-                self.goal_rot,
+                self.evaluation,
             ],
         )
+        wp.launch(reset_monitors_kernel, dim=len(worlds), inputs=[ids, self.state_0.body_q, self.monitors])
+
+    @_on_device
+    def place_cube(self, worlds: list[int], position, quat_xyzw, velocity) -> None:
+        """Teleport the cube (state injection for evaluator tests); restarts its episode monitors."""
+        ids = wp.array(worlds, dtype=int)
+        wp.launch(
+            place_cube_kernel,
+            dim=len(worlds),
+            inputs=[
+                ids,
+                wp.array(np.asarray(position, dtype=np.float32).reshape(-1, 3), dtype=wp.vec3),
+                wp.array(np.asarray(quat_xyzw, dtype=np.float32).reshape(-1, 4), dtype=wp.quat),
+                wp.array(np.asarray(velocity, dtype=np.float32).reshape(-1, 3), dtype=wp.vec3),
+            ],
+            outputs=[self.state_0.joint_q, self.state_0.joint_qd],
+        )
+        newton.eval_fk(self.model, self.state_0.joint_q, self.state_0.joint_qd, self.state_0)
+        wp.launch(reset_monitors_kernel, dim=len(worlds), inputs=[ids, self.state_0.body_q, self.monitors])
 
     @_on_device
     def begin_move(self, worlds: list[int], translation, rotvec, duration) -> None:
@@ -652,12 +918,24 @@ class PandaWorlds:
         )
 
     @_on_device
-    def begin_evaluate(self, worlds: list[int]) -> None:
+    def begin_evaluate(self, worlds: list[int], carry: list[bool], samples: list[int]) -> None:
+        """Optionally run the carry test, then take samples[i] hold samples (at most 31)."""
+        if max(samples) > 31:
+            raise ValueError("at most 31 evaluation samples")
         wp.launch(
             begin_evaluate_kernel,
             dim=len(worlds),
-            inputs=[wp.array(worlds, dtype=int)],
-            outputs=[self.mode, self.result, self.elapsed, self.eval_frames, self.eval_count, self.eval_bits],
+            inputs=[
+                wp.array(worlds, dtype=int),
+                wp.array(np.asarray(carry, dtype=np.int32), dtype=int),
+                wp.array(np.asarray(samples, dtype=np.int32), dtype=int),
+                self.state_0.body_q,
+                self.hold_pos,
+                self.sim.carry_up,
+                self.sim.carry_side,
+                round(self.sim.carry_time * self.sim.fps),
+            ],
+            outputs=[self.mode, self.result, self.elapsed, self.evaluation],
         )
 
     @_on_device
@@ -672,20 +950,27 @@ class PandaWorlds:
 
     @_on_device
     def snapshot(self, worlds: list[int]) -> list[dict]:
-        """Measured state plus the command bookkeeping of the given worlds."""
+        """Measured state, command bookkeeping and evaluator evidence of the given worlds."""
         body_q = self.state_0.body_q.numpy().reshape(self.world_count, BODIES_PER_WORLD, 7)
         joint_q = self.state_0.joint_q.numpy().reshape(self.world_count, COORDS_PER_WORLD)
         arrays = {
-            name: getattr(self, name).numpy()
-            for name in ("target_pos", "target_rot", "elapsed", "finger_target", "eval_count", "eval_bits")
+            name: getattr(self, name).numpy() for name in ("target_pos", "target_rot", "elapsed", "finger_target")
+        }
+        monitors = {name: getattr(self.monitors, name).numpy() for name in Monitors.vars}
+        evaluation = {
+            name: getattr(self.evaluation, name).numpy()
+            for name in ("count", "task_bits", "grasp_bits", "max_drift", "hold_penetration")
         }
         out = []
         for w in worlds:
-            tcp, cube = body_q[w, TCP_BODY], body_q[w, CUBE_BODY]
+            tcp, cube, hand = body_q[w, TCP_BODY], body_q[w, CUBE_BODY], body_q[w, HAND_BODY]
+            count = int(evaluation["count"][w])
             out.append(
                 {
                     "tcp_position": tcp[:3].astype(float),
                     "tcp_quat_xyzw": tcp[3:].astype(float),
+                    "hand_position": hand[:3].astype(float),
+                    "hand_quat_xyzw": hand[3:].astype(float),
                     "cube_position": cube[:3].astype(float),
                     "cube_quat_xyzw": cube[3:].astype(float),
                     "arm_q": joint_q[w, :ARM_COORDS].astype(float),
@@ -694,9 +979,13 @@ class PandaWorlds:
                     "target_position": arrays["target_pos"][w].astype(float),
                     "target_quat_xyzw": arrays["target_rot"][w].astype(float),
                     "elapsed": float(arrays["elapsed"][w]),
-                    "hold_samples": [
-                        bool(arrays["eval_bits"][w] >> k & 1) for k in range(int(arrays["eval_count"][w]))
-                    ],
+                    "hold_samples": _bits(int(evaluation["task_bits"][w]), count),
+                    "grasp_samples": _bits(int(evaluation["grasp_bits"][w]), count),
+                    "max_drift": float(evaluation["max_drift"][w]),
+                    "hold_penetration": float(evaluation["hold_penetration"][w]),
+                    "min_cube_z": float(monitors["min_cube_z"][w]),
+                    "max_cube_launch_speed": float(monitors["max_cube_launch_speed"][w]),
+                    "max_penetration": float(monitors["max_penetration"][w]),
                 }
             )
         return out
