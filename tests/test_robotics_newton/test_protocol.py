@@ -174,3 +174,38 @@ def test_layouts_are_deterministic_and_task_specific():
     assert sample_layout("lift", 7) != sample_layout("lift", 8)
     assert sample_layout("lift", 7).goal_position is None
     assert sample_layout("reach_pose", 7).goal_position is not None
+
+
+def test_finish_reports_diagnostics():
+    async def run():
+        episode, _ = make_episode()  # TCP at z 0.2, cube centre at z 0.1
+        obs = (await episode.call("observe", {})).data["observation_id"]
+        obs = (await episode.call("gripper", {"observation_id": obs, "command_id": "g1", "action": "close"})).data[
+            "observation_id"
+        ]
+        obs = (await episode.call("move_to", move(obs, "m", translation=(0.0, 0.0, -0.09)))).data["observation_id"]
+        await episode.call("gripper", {"observation_id": obs, "command_id": "g2", "action": "close"})
+        diagnostics = (await episode.finish())["diagnostics"]
+        assert diagnostics["gripper_closes"] == 2 and diagnostics["closed_at_cube"]
+        assert diagnostics["closest_close_offset_m"] == pytest.approx([0.0, 0.0, 0.01])
+
+        reach, _ = make_episode("reach_pose")
+        diagnostics = (await reach.finish())["diagnostics"]
+        goal = np.asarray(reach.layout.goal_position)
+        assert diagnostics["final_position_error_m"] == pytest.approx(np.linalg.norm(goal - [0.5, 0.0, 0.2]))
+        assert "closed_at_cube" not in diagnostics
+
+    asyncio.run(run())
+
+
+def test_idle_and_closed_episodes():
+    async def run():
+        episode, _ = make_episode()
+        await episode.call("observe", {})
+        assert not episode.idle_for(60)
+        episode.last_active -= 120
+        assert episode.idle_for(60)
+        episode.close()
+        assert "finished" in (await episode.call("observe", {})).data["error"]
+
+    asyncio.run(run())

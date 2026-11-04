@@ -2,7 +2,7 @@
 
 GPU-batched Newton simulation of the Panda tasks in [`examples/robotics`](../robotics) (`lift`, `reach_pose`), served over HTTP with the same intuitive tool surface: `observe`, `move_to`, `gripper` and `batch_actions`. One process holds many worlds on one GPU, and each episode leases one world. There is no Docker or private `robot-rollout` dependency.
 
-Status: Phase 1 is done: simulator, tool protocol, scripted experts, benchmark and tests. Evaluator v2 and its red-team suite are in place (see below). The slime rollout hook (a token-level VLM loop modelled on `geo3k_vlm_multi_turn`) is the next step.
+Status: Phase 1 is done: simulator, tool protocol, scripted experts, benchmark and tests. Evaluator v2 and its red-team suite are in place (see below). Phase 2: the slime rollout hook runs Qwen3.5 VLM episodes end to end. Zero-shot base rates and failure breakdowns are below: lift 0/64, reach 0/32 with a 1024-token turn cap and 2/16 with 4096 (Qwen3.5-4B).
 
 | File | Role |
 |---|---|
@@ -16,6 +16,10 @@ Status: Phase 1 is done: simulator, tool protocol, scripted experts, benchmark a
 | `scripted.py` | Scripted experts and the evaluation runner. Reach uses only public state; lift reads the cube pose from the privileged endpoint. |
 | `redteam.py` | Hack policies and injected states that must score 0, plus the experts, run under v1 and v2. |
 | `bench.py` | Frame and render latency against world count. |
+| `tasks.py` | Task instructions, the system prompt, and prompt rows for slime (one jsonl row per task and seed; disjoint train and held-out seed ranges). |
+| `rollout.py` | The slime custom generate hook: a token-in/token-out multi-turn VLM loop against SGLang `/generate`, with the robot server awaited over HTTP. |
+| `rollout_eval.py` | Runs the hook on prompt rows without Ray or Megatron, and reports success rates and failure categories. |
+| `run_robotics_newton.py`, `rollout_config.yaml` | `train.py --debug-rollout-only` launch on the slime Docker image (not yet run; see below). |
 
 ## Run
 
@@ -87,6 +91,64 @@ Known limits:
 - **No clean balanced state to test with.** No stable resting spot on this hand is free of interpenetration (probed at 15–30 mm), so a genuinely balanced cube can't be tested. `held_by_fingers` rejects the injected states on its own.
 - **Reach has a vision-free shortcut.** Reach gives the goal as numbers, so it is solvable without vision (the scripted expert never looks). A blind lift policy that always grasps at the spawn-region centre scores 3.1% (4/128).
 - **Grasp and carry tolerances** come from the scripted expert's grasps (cube centred to 0.3 mm, width 49.1 mm for the 50 mm cube).
+
+## Rollout hook (Phase 2)
+
+`rollout.generate` is a `--custom-generate-function-path` hook on the pattern of `examples/geo3k_vlm_multi_turn`, with the environment made asynchronous so the episodes of a rollout run concurrently.
+
+- **Prompt.** Rows from `tasks.py` hold text-only messages (system prompt with the intuitive-mode rules, then the task instruction), the tool schemas and `metadata {task, seed, split}`. Load them with `--input-key messages --tool-key tools --metadata-key metadata --apply-chat-template`. The model must call `observe` first; images arrive only through tool replies. All samples of a prompt share its seed, so a GRPO group starts from one scene.
+- **Turn.** SGLang `/generate` gets the full token sequence and every image so far, and returns logprobs. Tool calls are parsed with SGLang's `qwen3_coder` parser (Qwen3.5's XML format) and run on the robot server in order. The replies are rendered by the chat template as a `tool` turn: the reply JSON with floats rounded to 4 digits, then each camera image under its label. That turn is appended with loss mask 0. The decoded token sequence is exactly what the chat template renders for the same conversation (tested).
+- **End.** The episode ends on a reply without tool-call markup, on `robot_max_turns`, on a turn that hits `robot_max_turn_tokens`, on the response budget (`--rollout-max-response-len`, or `--rollout-max-context-len`), or when the command budget is exhausted. A reply with tool-call markup that does not parse gets a format-error tool turn and counts as a format error.
+- **Reward.** The robot server's `finish` scores the frozen episode with evaluator v2, and the hook sets `sample.reward`, so slime's reward model is skipped. Every check, metric and episode statistic goes to `sample.metadata["robot"]`.
+- **Failure handling.** If the robot server fails, the sample is marked `FAILED` with `remove_sample=True`, so a broken environment never becomes a training signal. On abort (`abort_mode = "request"`) or any exception, the hook releases the episode. The server also releases episodes that have seen no tool call for `--idle-timeout` seconds (900 s by default), which covers clients that died before releasing.
+
+Failure categories (`rollout.classify`; heuristic, from privileged diagnostics that never reach the policy or the reward):
+
+| Category | Meaning |
+|---|---|
+| `format` | A turn ran past the per-turn token cap, or a tool call was malformed and no physical command ran. |
+| `no_action` | The model never moved the robot (for example, it observed and then answered). |
+| `perception` | Lift only: the gripper was never closed with the TCP at the cube (within 2 cm horizontally and 2.5 cm vertically of its centre), so the model did not locate it. |
+| `control` | The robot acted (for lift, closed at the cube), but the task condition or a process check failed. |
+| `infrastructure` | The robot server or SGLang failed; excluded from success rates. |
+
+### Zero-shot base rates (2026-11-03, RTX A6000 shared with another job)
+
+Held-out seeds 1,000,000 onward, one sample per seed, temperature 1, thinking off, at most 24 turns, 24,576 response tokens, evaluator v2. Episode logs (transcripts, checks, diagnostics) are in `codespace/phase2-results/`, outside the repository.
+
+| Model, turn cap | Task | Success | format | no_action | perception | control | Mean turns | Tool errors / episode |
+|---|---|---:|---:|---:|---:|---:|---:|---:|
+| Qwen3.5-0.8B, 1024 | lift (32) | 0 | 7 | 5 | 20 | – | 19.5 | 8.5 |
+| Qwen3.5-0.8B, 1024 | reach_pose (32) | 0 | 7 | 6 | – | 19 | 15.3 | 7.5 |
+| Qwen3.5-4B, 1024 | lift (32) | 0 | 5 | 0 | 27 | – | 16.0 | 1.1 |
+| Qwen3.5-4B, 1024 | reach_pose (32) | 0 | 31 | 0 | – | 1 | 2.3 | 0 |
+| Qwen3.5-4B, 4096 | reach_pose (16) | **2 (12.5%)** | 9 | 0 | – | 5 | 6.9 | 0 |
+
+What the transcripts show:
+- **0.8B breaks the protocol.** Of its tool errors, 204 reuse a `command_id` with different arguments (often the tool name itself as the id). Next come missing command ids, `batch_actions` lists that aren't valid JSON, and 83 moves over the 0.25 m limit.
+- **4B follows the protocol but doesn't look.** In lift, it never closed the gripper within 2 cm horizontally of the cube. Its best close was a median 17 cm above the cube centre and 11 cm off horizontally. All 15 of its final answers claimed the cube was held, including ones where its own reading showed the gripper fully closed (0.0005 m; a held 5 cm cube leaves about 0.049 m). Evaluator v2 scores all of these 0 from physical state, and a transcript-reading judge would have been told the opposite.
+- **Reach comes down to arithmetic, not vision.** The 4B model works out goal minus current pose by hand. With a 1024-token turn cap, almost every episode is cut off mid-calculation. With 4096, 9 of 16 episodes ended within 0.5 mm of the goal position, but 0.17–1.0 rad off in orientation. Converting a goal quaternion into a relative axis-angle command is the bottleneck, and the 2 successes are the episodes that got it right. This is the vision-free shortcut noted under evaluator v2. Reach measures numeric reasoning until the goal is given visually.
+- **GRPO signal.** Lift has none at any setting (0/64). Reach at 4096 has some (2/16). That matches the Phase 3 plan: a supervised warm start on scripted-expert trajectories before GRPO.
+- **Throughput.** With 16 concurrent 4B episodes, SGLang's KV pool (0.45 of one A6000) cannot keep every conversation between turns. Each turn re-prefills its full history (often over 15k tokens), and decode fell to about 33 tokens/s. At 8 concurrent, prefix hits rose from 1.2k (only the system prompt) to 4–5k tokens per request. Wall time: 0.8B, 64 episodes in 7.3 min; 4B, 64 episodes in 32 min; 4B at 4096, 16 episodes in 24 min.
+
+### Running it
+
+`rollout_eval.py` replaces only slime's Ray rollout manager. It calls the same hook with slime's `Dataset`, `GenerateState` and HTTP client:
+
+```bash
+python -m examples.robotics_newton.tasks --split heldout --count 32 --output heldout.jsonl
+python -m examples.robotics_newton.server --world-count 16 --device cuda:1 --port 18100      # robotics-newton env
+python -m sglang.launch_server --model-path Qwen3.5-4B --port 30000 --mem-fraction-static 0.45 \
+    --attention-backend triton --sampling-backend pytorch                                    # rollout env
+python -m examples.robotics_newton.rollout_eval --hf-checkpoint Qwen3.5-4B --prompt-data heldout.jsonl \
+    --concurrency 16 --output results.jsonl
+python -m pytest tests/test_robotics_newton/test_rollout.py   # rollout env; needs a Qwen3.5 checkpoint for the tokenizer
+```
+
+Rollout environment notes:
+- **SGLang version and patch.** The env was built with pip: `sglang==0.5.21` (slime's pin), `requirements.txt`, `openai==2.6.1` and `ninja`. SGLang must carry slime's `docker/patch/v0.5.21/sglang.patch`, as the Docker image does. Without the patch, SGLang's Qwen-VL processor rejects `input_ids` whose image placeholders are already expanded. Every multi-turn VLM request has that form, so the second turn fails with `StopIteration`. The patch applies cleanly to the pip package with `patch -p2` inside `site-packages`.
+- **Ampere GPUs.** FlashInfer compiles kernels at runtime and needs `ninja` on `PATH`. The Triton attention backend avoids that.
+- **`run_robotics_newton.py`** launches `train.py --debug-rollout-only` with the same hook and data. It needs the slime Docker image (Megatron, Ray) and hasn't been run here. It uses the new `scripts/models/qwen3.5-{0.8B,4B}-vl.sh` model scripts.
 
 ## Measured (2026-11-03, RTX A6000)
 

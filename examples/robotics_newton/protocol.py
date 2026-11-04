@@ -16,6 +16,7 @@ import asyncio
 import dataclasses
 import json
 import math
+import time
 from typing import Protocol
 
 import numpy as np
@@ -23,20 +24,7 @@ from scipy.spatial.transform import Rotation
 
 from .evaluator import V2, EvaluatorConfig, score
 from .sim.scene import FINGER_OPEN, Layout
-
-INSTRUCTIONS = {
-    # Verbatim from examples/robotics/tasks/*/instruction.md.
-    "lift": (
-        "Pick up the red cube with the Panda gripper and hold it above the table for at least 0.5 simulated "
-        "seconds. Ground each motion in the current camera observations and robot measurements; verify the "
-        "grasp and lift visually."
-    ),
-    "reach_pose": (
-        "Move the Panda end effector to the public goal pose returned by observe. Satisfy both position and "
-        "orientation and hold the pose for at least 0.5 simulated seconds. Use the robot tools; do not inspect "
-        "the simulator or evaluator."
-    ),
-}
+from .tasks import INSTRUCTIONS
 
 
 class Backend(Protocol):
@@ -67,6 +55,11 @@ class Limits:
 
 
 DEFAULT_LIMITS = Limits()
+
+# Diagnostics only (never part of the reward): a gripper close counts as "at the
+# cube" when the TCP is within the cube footprint and near its centre height.
+NEAR_CUBE_XY_M = 0.02
+NEAR_CUBE_Z_M = 0.025
 
 
 @dataclasses.dataclass
@@ -124,6 +117,9 @@ class Episode:
         self.physical_commands = 0
         self.gripper_command = "open"
         self.events: list[dict] = []
+        # TCP minus cube position, measured just before each gripper close.
+        self.close_offsets: list[list[float]] = []
+        self.last_active = time.monotonic()
         self._observations = 0
         self._commands: dict[str, tuple[str, Reply]] = {}
         self._lock = asyncio.Lock()
@@ -141,6 +137,7 @@ class Episode:
             "batch_actions": self._batch_actions,
         }
         async with self._lock:
+            self.last_active = time.monotonic()
             if self._finished:
                 return Reply({"status": "error", "error": "episode already finished"})
             if name not in handlers:
@@ -152,7 +149,16 @@ class Episode:
             except ToolError as exc:
                 reply = Reply({"status": "error", "error": str(exc)})
             self.events.append({"tool": name, "arguments": arguments, "reply": reply.data})
+            self.last_active = time.monotonic()
             return reply
+
+    def idle_for(self, seconds: float) -> bool:
+        """True when no tool call is running and none arrived for `seconds`."""
+        return not self._lock.locked() and time.monotonic() - self.last_active > seconds
+
+    def close(self) -> None:
+        """Refuse further tool calls without scoring (abandoned episodes)."""
+        self._finished = True
 
     async def finish(self) -> dict:
         """Freeze the episode and score it; no tool call is accepted afterwards."""
@@ -184,7 +190,28 @@ class Episode:
             "reward": scored["reward"],
             "rewards": {"reward": scored["reward"], "physical_success": float(state["success"])},
             "evaluator_state": state,
+            "diagnostics": self._diagnostics(evidence),
         }
+
+    def _diagnostics(self, evidence: dict) -> dict:
+        """Privileged facts for failure analysis; never shown to the policy or used in the reward."""
+        diagnostics = {"physical_commands": self.physical_commands, "gripper_closes": len(self.close_offsets)}
+        if self.layout.goal_position is not None:
+            goal = Rotation.from_quat(self.layout.goal_quat_xyzw)
+            achieved = Rotation.from_quat(evidence["tcp_quat_xyzw"])
+            diagnostics["final_position_error_m"] = float(
+                np.linalg.norm(np.asarray(evidence["tcp_position"]) - self.layout.goal_position)
+            )
+            diagnostics["final_rotation_error_rad"] = float((goal * achieved.inv()).magnitude())
+        else:
+            # Distance from "at the cube" in units of the tolerance box; <= 1 is inside it.
+            def misfit(d):
+                return max(math.hypot(d[0], d[1]) / NEAR_CUBE_XY_M, abs(d[2]) / NEAR_CUBE_Z_M)
+
+            closest = min(self.close_offsets, key=misfit, default=None)
+            diagnostics["closest_close_offset_m"] = closest
+            diagnostics["closed_at_cube"] = closest is not None and misfit(closest) <= 1
+        return diagnostics
 
     # ----- tools -------------------------------------------------------------
 
@@ -331,6 +358,10 @@ class Episode:
         receipt = {"command_id": arguments["command_id"], "tool": "gripper", "requested": {"action": action}}
         if self.physical_commands >= self.limits.command_budget:
             return self._rejected(identity, receipt, "physical command budget exhausted")
+        if action == "close":
+            before = await self.backend.snapshot(self.world)
+            offset = np.asarray(before["tcp_position"]) - np.asarray(before["cube_position"])
+            self.close_offsets.append([round(float(v), 5) for v in offset])
         snap = await self.backend.gripper(self.world, FINGER_OPEN if action == "open" else 0.0)
         self.physical_commands += 1
         self.gripper_command = "open" if action == "open" else "closed"

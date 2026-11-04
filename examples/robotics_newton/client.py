@@ -20,7 +20,9 @@ class RobotClient:
             return await response.json()
 
     async def start(self, task: str, seed: int) -> dict:
-        return await self._request("POST", "/episodes", json={"task": task, "seed": seed})
+        # The server queues the request until a world is free, which can take longer than any tool call.
+        no_limit = aiohttp.ClientTimeout(total=None)
+        return await self._request("POST", "/episodes", json={"task": task, "seed": seed}, timeout=no_limit)
 
     async def call(self, episode_id: str, name: str, arguments: dict | None = None) -> dict:
         """Returns {"data", "images": [{camera, width, height, mime_type, data(base64)}], "is_error"}."""

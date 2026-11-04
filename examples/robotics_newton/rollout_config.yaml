@@ -1,0 +1,4 @@
+# --custom-config-path for examples.robotics_newton.rollout.generate
+robot_server_url: http://127.0.0.1:18100
+robot_max_turns: 24
+robot_max_turn_tokens: 1024

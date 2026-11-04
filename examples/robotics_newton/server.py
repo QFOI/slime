@@ -12,7 +12,9 @@ GET    /stats
 
 The simulator runs on a dedicated thread. Requests that arrive between control
 frames are applied together; frames are stepped only while some world has a
-command in flight, and every world advances on each frame.
+command in flight, and every world advances on each frame. Episodes with no
+tool call for --idle-timeout seconds are released, so a client that died or was
+cancelled before it could release its episode does not leak the world.
 """
 
 from __future__ import annotations
@@ -215,13 +217,16 @@ class RobotServer:
         limits: Limits = DEFAULT_LIMITS,
         evaluator: EvaluatorConfig = V2,
         allow_privileged: bool = False,
+        idle_timeout_sec: float | None = 900.0,
     ):
         self.worker = worker
         self.limits = limits
         self.evaluator = evaluator
         self.allow_privileged = allow_privileged
+        self.idle_timeout_sec = idle_timeout_sec
         self.episodes: dict[str, Episode] = {}
         self.free: asyncio.Queue[int] | None = None
+        self._reaper: asyncio.Task | None = None
         self.cameras = [
             {"name": c.name, "width": c.width, "height": c.height, "mount": "wrist" if c.mount_body else "fixed"}
             for c in worker.cameras
@@ -230,6 +235,7 @@ class RobotServer:
     def app(self) -> web.Application:
         app = web.Application(client_max_size=16 * 1024**2)
         app.on_startup.append(self._startup)
+        app.on_cleanup.append(self._cleanup)
         app.router.add_post("/episodes", self.start_episode)
         app.router.add_post("/episodes/{id}/tools/{name}", self.call_tool)
         app.router.add_post("/episodes/{id}/finish", self.finish_episode)
@@ -243,6 +249,23 @@ class RobotServer:
         self.free = asyncio.Queue()
         for world in range(self.worker.world_count):
             self.free.put_nowait(world)
+        if self.idle_timeout_sec:
+            self._reaper = asyncio.create_task(self._reap_idle(self.idle_timeout_sec))
+
+    async def _cleanup(self, _app) -> None:
+        if self._reaper is not None:
+            self._reaper.cancel()
+
+    async def _reap_idle(self, timeout: float) -> None:
+        while True:
+            await asyncio.sleep(min(30.0, timeout / 4))
+            for episode in list(self.episodes.values()):
+                if episode.idle_for(timeout):
+                    logger.warning(
+                        "releasing episode %s on world %d after %.0f s idle", episode.id, episode.world, timeout
+                    )
+                    episode.close()
+                    self._release(episode)
 
     def _episode(self, request: web.Request) -> Episode:
         episode = self.episodes.get(request.match_info["id"])
@@ -349,12 +372,18 @@ def main():
     parser.add_argument("--port", type=int, default=18100)
     parser.add_argument("--allow-privileged", action="store_true")
     parser.add_argument("--evaluator", choices=sorted(EVALUATORS), default="v2")
+    parser.add_argument("--idle-timeout", type=float, default=900.0, help="seconds; 0 disables")
     args = parser.parse_args()
     logging.basicConfig(level=logging.INFO)
     worker = SimWorker(args.world_count, device=args.device)
     worker.start()
     try:
-        server = RobotServer(worker, evaluator=EVALUATORS[args.evaluator], allow_privileged=args.allow_privileged)
+        server = RobotServer(
+            worker,
+            evaluator=EVALUATORS[args.evaluator],
+            allow_privileged=args.allow_privileged,
+            idle_timeout_sec=args.idle_timeout,
+        )
         web.run_app(server.app(), host=args.host, port=args.port)
     finally:
         worker.stop()
