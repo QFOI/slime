@@ -1,0 +1,13 @@
+{
+  "kind": "random_tiny_hf_qwen35_cpu",
+  "gpu_training_verified": false,
+  "processor": "Qwen3VLProcessor",
+  "image_count": 2,
+  "image_token_count": 128,
+  "prompt_tokens": 172,
+  "sampled_tokens": 2,
+  "replay_logprob_error": 9.5367431640625e-07,
+  "vision_grad_norm_sum": 4.5426976649905555,
+  "lm_parameter_delta_l1": 783.7177734375,
+  "compacted_image_count": 1
+}

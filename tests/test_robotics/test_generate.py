@@ -40,7 +40,11 @@ def test_standard_evaluation_sample(monkeypatch):
 
 def test_external_api_rollout_cannot_enter_training():
     with pytest.raises(ValueError, match="evaluation-only"):
-        asyncio.run(module.generate(SimpleNamespace(), Sample(), {}, evaluation=False))
+        asyncio.run(
+            module.generate(
+                SimpleNamespace(robotics_config=ROOT / "configs/robotics.yaml"), Sample(), {}, evaluation=False
+            )
+        )
 
 
 def test_changed_task_rejected_before_agent_start():
@@ -52,3 +56,55 @@ def test_changed_task_rejected_before_agent_start():
                 SimpleNamespace(robotics_config=ROOT / "configs/robotics.yaml"), sample, {}, evaluation=True
             )
         )
+
+
+def test_training_sampling_does_not_enter_external_dsh_schema(monkeypatch):
+    from examples.robotics import training
+    from robot_rollout.config import Config
+
+    recorded = {}
+
+    class Gateway:
+        def __init__(self, args, cfg, agent, sampling_params, **kwargs):
+            recorded["sampling"] = sampling_params
+
+        def samples(self, sample, result):
+            sample.remove_sample = False
+            return [sample]
+
+    async def run(cfg, task, **kwargs):
+        # DSH revalidates this schema in its child process.
+        Config.model_validate(cfg.runtime.model_dump())
+        assert cfg.runtime.backend.sampling.top_k != -1
+        assert cfg.runtime.model is None and not cfg.runtime.models
+        assert kwargs["agent"] == "dsh" and isinstance(kwargs["model_gateway"], Gateway)
+        return {"trial_id": "trial", "status": "completed", "reward": 1.0}
+
+    monkeypatch.setattr(training, "TrainingGateway", Gateway)
+    monkeypatch.setattr(module, "run_episode", run)
+    sample = Sample(index=0, **HarborTask.load(ROOT / "tasks/panda-reach").row())
+    sample.metadata.update(agent="dsh", profile="expert")
+    asyncio.run(
+        module.generate(
+            SimpleNamespace(robotics_config=ROOT / "configs/training.yaml"), sample, {"top_k": -1, "temperature": 0.8}
+        )
+    )
+    assert recorded["sampling"] == {"top_k": -1, "temperature": 0.8}
+
+
+def test_slime_eval_disabled_top_k_maps_to_external_api_none(monkeypatch):
+    from robot_rollout.config import Config
+
+    async def run(cfg, task, **kwargs):
+        Config.model_validate(cfg.runtime.model_dump())
+        assert cfg.runtime.backend.sampling.top_k is None
+        return {"trial_id": "trial", "status": "completed", "reward": 0.0}
+
+    monkeypatch.setattr(module, "run_episode", run)
+    sample = Sample(index=0, **HarborTask.load(ROOT / "tasks/panda-reach").row())
+    sample.metadata.update(agent="dsh", profile="expert")
+    asyncio.run(
+        module.generate(
+            SimpleNamespace(robotics_config=ROOT / "configs/robotics.yaml"), sample, {"top_k": -1}, evaluation=True
+        )
+    )

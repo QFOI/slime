@@ -78,7 +78,7 @@ class AnthropicAdapter(BaseAdapter):
 # --- Translation (Anthropic wire -> chat-template messages) ---
 
 
-def _translate_messages(msgs: list[dict], system: Any) -> list[dict]:
+def _translate_messages(msgs: list[dict], system: Any, *, content_transform=flatten_content) -> list[dict]:
     """Anthropic messages + system -> chat-template messages. Pure function."""
     translated: list[dict] = []
     tool_order: dict[str, int] = {}
@@ -93,11 +93,11 @@ def _translate_messages(msgs: list[dict], system: Any) -> list[dict]:
         if all(isinstance(ident, str) and ident in tool_order for ident in ids):
             pending_results.sort(key=lambda result: tool_order[result["tool_use_id"]])
         for result in pending_results:
-            translated.append({"role": "tool", "content": flatten_content(result.get("content"))})
+            translated.append({"role": "tool", "content": content_transform(result.get("content"))})
         pending_results.clear()
 
     if system:
-        translated.append({"role": "system", "content": flatten_content(system)})
+        translated.append({"role": "system", "content": content_transform(system)})
     for m in msgs:
         if not isinstance(m, dict):
             continue
@@ -112,7 +112,7 @@ def _translate_messages(msgs: list[dict], system: Any) -> list[dict]:
                     translated.append({"role": "user", "content": b.get("text", "")})
                 else:
                     flush_results()
-                    translated.append({"role": "user", "content": flatten_content(b)})
+                    translated.append({"role": "user", "content": content_transform(b)})
         elif role == "assistant":
             flush_results()
             texts, thinkings, tcs = [], [], []
@@ -138,7 +138,7 @@ def _translate_messages(msgs: list[dict], system: Any) -> list[dict]:
             translated.append(mo)
         elif role == "system":
             flush_results()
-            translated.append({"role": "system", "content": flatten_content(content)})
+            translated.append({"role": "system", "content": content_transform(content)})
     flush_results()
     return translated
 

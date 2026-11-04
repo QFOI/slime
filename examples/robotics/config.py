@@ -13,6 +13,11 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 from robot_rollout.config import Config, Prompt, prompt_text
 
 
+class Training(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    enabled: bool = False
+
+
 class Experiment(BaseModel):
     model_config = ConfigDict(extra="forbid")
     tasks: list[str] = Field(min_length=1)
@@ -27,6 +32,7 @@ class Experiment(BaseModel):
     startup_timeout_sec: float = Field(default=180, gt=0)
     max_model_requests: int = Field(default=60, gt=0)
     runtime: Config = Field(default_factory=Config)
+    training: Training = Field(default_factory=Training)
 
     @model_validator(mode="after")
     def profile_boundary(self):

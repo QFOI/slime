@@ -1,0 +1,17 @@
+{
+  "ready": false,
+  "cuda_gpus": 0,
+  "torch": "2.6.0+cpu",
+  "packages": {
+    "ray": "2.54.0",
+    "sglang": "0.5.9",
+    "megatron-core": null,
+    "transformers": "5.22.1",
+    "straw-queue": "0.1.8"
+  },
+  "robot_image_available": true,
+  "failures": [
+    "Need 2 local CUDA GPUs; found 0",
+    "Missing training dependency: megatron.core"
+  ]
+}

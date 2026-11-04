@@ -1,7 +1,9 @@
 # Robotics rollouts in slime
 
 Harbor 任务包 → 独立机器人会话 → 官方 CC / DSH → 冻结状态 → 独立 Harbor verifier → slime `Sample`。
-只做 rollout / evaluation，不包含 RL 训练。CLI 使用 slime 原生的 `BaseHarness` 和 `Sandbox` 接口，任务代码与训练核心分离。
+支持外部 API 评测，以及接到 slime 所管理 SGLang actor 的多模态训练样本生成。CLI 使用 slime 原生的 `BaseHarness` 和 `Sandbox` 接口，任务代码与训练核心分离。
+
+训练使用独立的 [training.yaml](configs/training.yaml) 和 [训练说明](TRAINING.md)。完整 GPU Megatron/SGLang 联训尚未在 hy-stem 验收；不能把已有 rollout 成功或 CPU 梯度检查当成 GPU 联训成功。
 
 ## 固定版本与来源
 
@@ -96,7 +98,7 @@ export ROBOTICS_CONFIG="$PWD/examples/robotics/configs/robotics.yaml"
 
 hook 签名与 `examples/coding_agent_rl/generate.py` 相同：
 `async generate(args, sample, sampling_params, evaluation=False) -> list[Sample]`。
-JSONL 只是带任务路径/内容摘要的 Harbor 索引；任务内容变更会拒绝过期索引。保留 index/group_index，写入 reward/status/session_id/metrics。eval sentinel 与 coding_agent_rl 一致：`remove_sample=True`、loss mask 为 0；没有伪造可训练的模型 tokens。当前范围仅 rollout/eval，`evaluation=False` 明确拒绝；多模态 RL token/replay 集成不在此模块中。
+JSONL 只是带任务路径/内容摘要的 Harbor 索引；任务内容变更会拒绝过期索引。保留 index/group_index，写入 reward/status/session_id/metrics。外部 API eval sentinel 与 coding_agent_rl 一致：`remove_sample=True`、loss mask 为 0，不会进入训练。`training.enabled: true` 时使用 slime actor，`evaluation=False` 返回真实采样 tokens/logprobs、对应图像张量和非零 loss mask；训练期间的 eval 也使用当前 actor。详见 [TRAINING.md](TRAINING.md)。
 
 输出每回合 `result.json`、完整 agent 轨迹、脱敏 API 轨迹、物理动作/观测、verifier 日志和 Harbor reward；矩阵汇总为 `report.json`。运行产物默认不进入 Git。
 

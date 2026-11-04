@@ -528,6 +528,7 @@ async def call_sglang_generate(
     *,
     adapter: BaseAdapter,
     session_id: str | None = None,
+    multimodal_payload: dict | None = None,
 ) -> TurnRecord:
     """Generate a complete turn, continuing interrupted requests in partial rollout.
 
@@ -586,6 +587,13 @@ async def call_sglang_generate(
                     "return_logprob": True,
                     **request_options,
                 }
+                if multimodal_payload is not None:
+                    if partial_rollout:
+                        raise ValueError("Multimodal agent turns do not support partial rollout yet")
+                    # SGLang must expand image placeholders itself. The local
+                    # processor's expanded IDs are retained for training only.
+                    payload.pop("input_ids")
+                    payload.update(multimodal_payload)
                 if request_options.get("return_routed_experts") and captured.response_length:
                     start = captured.get_rollout_routed_experts_length()
                     if start != len(captured.tokens) - 1:
@@ -625,6 +633,11 @@ async def call_sglang_generate(
                     if span is not None:
                         span.update(build_sglang_meta_trace_attrs(data.get("meta_info") or {}))
                 meta = data.get("meta_info") or {}
+                if multimodal_payload is not None and meta.get("prompt_tokens") != len(prompt_ids):
+                    raise ValueError(
+                        "SGLang/HF multimodal prompt length differs: "
+                        f"{meta.get('prompt_tokens')} != {len(prompt_ids)}; check processor/model versions"
+                    )
                 if "output_token_logprobs" not in meta:
                     raise ValueError("SGLang must return output_token_logprobs for token-exact training")
                 output_token_logprobs = meta.get("output_token_logprobs") or []
@@ -677,7 +690,7 @@ async def call_sglang_generate(
                         trace_span(target, "partial_rollout_backoff", record_error=False) if target else nullcontext()
                     ):
                         await asyncio.sleep(0.1)
-    except (asyncio.CancelledError, aiohttp.ClientError, asyncio.TimeoutError) as e:
+    except (asyncio.CancelledError, aiohttp.ClientError, TimeoutError) as e:
         # free the sglang slot eagerly on client cancel/timeout, else the
         # orphaned generation keeps occupying KV until its own length cap
         logger.debug("[%s] sid=%s rid=%s turn aborted: %s", adapter.log_prefix, session_id, rid, type(e).__name__)

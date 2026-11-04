@@ -100,7 +100,7 @@ def _arguments_as_dict(arguments: Any) -> dict[str, Any]:
     return {"_raw_arguments": str(arguments)}
 
 
-def _translate_messages(messages: list[dict]) -> list[dict]:
+def _translate_messages(messages: list[dict], *, content_transform=flatten_content) -> list[dict]:
     """OpenAI chat messages -> tokenizer chat-template messages.
 
     Mirrors anthropic._translate_messages so a replayed assistant turn compares
@@ -124,14 +124,14 @@ def _translate_messages(messages: list[dict]) -> list[dict]:
             role = "system"
 
         if role in {"system", "user"}:
-            translated.append({"role": role, "content": flatten_content(content)})
+            translated.append({"role": role, "content": content_transform(content)})
         elif role == "tool":
             # drop tool_call_id -- wire-only correlation field; see docstring
-            translated.append({"role": "tool", "content": flatten_content(content)})
+            translated.append({"role": "tool", "content": content_transform(content)})
         elif role == "assistant":
             assistant: dict[str, Any] = {
                 "role": "assistant",
-                "content": flatten_content(content),
+                "content": content_transform(content),
             }
             reasoning = msg.get("reasoning_content")
             if reasoning:

@@ -123,7 +123,9 @@ def cc_result(path: Path) -> dict:
     return results[-1]
 
 
-async def run_episode(experiment: Experiment, task: HarborTask, *, agent: str, profile: str) -> dict:
+async def run_episode(
+    experiment: Experiment, task: HarborTask, *, agent: str, profile: str, model_gateway=None
+) -> dict:
     ident = uuid.uuid4().hex
     directory = Path(experiment.output_dir) / ident
     directory.mkdir(parents=True, mode=0o700)
@@ -147,7 +149,8 @@ async def run_episode(experiment: Experiment, task: HarborTask, *, agent: str, p
             )
             max_output = cfg.claude.max_output_tokens if agent == "cc" else cfg.dsh.max_output_tokens
             trace = Trace(directory / "api.jsonl", [], cfg.run.api_trace)
-            async with Gateway(cfg.backend, trace, max_output=max_output, request_limit=limit) as gateway:
+            gateway_context = model_gateway or Gateway(cfg.backend, trace, max_output=max_output, request_limit=limit)
+            async with gateway_context as gateway:
                 async with DockerSandbox(experiment.image) as sb:
                     await sb.exec("mkdir -p /workspace/.harness", check=True)
                     if agent == "cc":
@@ -184,6 +187,8 @@ async def run_episode(experiment: Experiment, task: HarborTask, *, agent: str, p
                     metrics = await harness.collect_metrics(sb, workdir="/workspace")
                     result.update(agent_exit_code=exit_code, agent_metrics=metrics, model_requests=gateway.requests)
                     await sb.copy_out("/workspace/.harness", directory / "agent")
+                    if getattr(gateway, "error", None):
+                        raise RuntimeError(gateway.error)
                     if (
                         exit_code == EXIT_TIME_BUDGET_EXCEEDED
                         or gateway.limit_reached

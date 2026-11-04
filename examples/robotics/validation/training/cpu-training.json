@@ -1,0 +1,210 @@
+{
+  "kind": "cpu_trainable_protocol_fixture",
+  "gpu_training_verified": false,
+  "steps": [
+    {
+      "step": 0,
+      "outcomes": [
+        {
+          "step": 0,
+          "agent": "cc",
+          "profile": "intuitive",
+          "seed": 0,
+          "reward": 1.0,
+          "trial_id": "9d0d3bb78d2e47eebb30c92bff8354f6",
+          "status": "completed",
+          "segments": 3,
+          "image_turns": 2
+        },
+        {
+          "step": 0,
+          "agent": "cc",
+          "profile": "intuitive",
+          "seed": 1,
+          "reward": 0.0,
+          "trial_id": "ccd3ecca4dea41ed8f0bb34b8d36b4f5",
+          "status": "completed",
+          "segments": 2,
+          "image_turns": 1
+        },
+        {
+          "step": 0,
+          "agent": "cc",
+          "profile": "expert",
+          "seed": 0,
+          "reward": 1.0,
+          "trial_id": "2e0c3553cb854d8fb4db3174e200017a",
+          "status": "completed",
+          "segments": 4,
+          "image_turns": 3
+        },
+        {
+          "step": 0,
+          "agent": "cc",
+          "profile": "expert",
+          "seed": 1,
+          "reward": 0.0,
+          "trial_id": "303b7d2a34e14a51996dea0dd17bb085",
+          "status": "completed",
+          "segments": 3,
+          "image_turns": 2
+        },
+        {
+          "step": 0,
+          "agent": "dsh",
+          "profile": "intuitive",
+          "seed": 0,
+          "reward": 1.0,
+          "trial_id": "6b4e634c46e34e3abd02c2e56d0f5e76",
+          "status": "completed",
+          "segments": 3,
+          "image_turns": 2
+        },
+        {
+          "step": 0,
+          "agent": "dsh",
+          "profile": "intuitive",
+          "seed": 1,
+          "reward": 0.0,
+          "trial_id": "19db1ecb6ce94015b4a94bd1cfe8a933",
+          "status": "completed",
+          "segments": 2,
+          "image_turns": 1
+        },
+        {
+          "step": 0,
+          "agent": "dsh",
+          "profile": "expert",
+          "seed": 0,
+          "reward": 1.0,
+          "trial_id": "a63610ed8a704651bc1abab1f2d1d646",
+          "status": "completed",
+          "segments": 4,
+          "image_turns": 3
+        },
+        {
+          "step": 0,
+          "agent": "dsh",
+          "profile": "expert",
+          "seed": 1,
+          "reward": 0.0,
+          "trial_id": "3033e99eb51c4eb99d55c20c4fbec01a",
+          "status": "completed",
+          "segments": 3,
+          "image_turns": 2
+        }
+      ],
+      "loss": -0.1421365886926651,
+      "grad_norm": 0.002648348454385996,
+      "vision_grad_norm": 0.00215629069134593,
+      "parameter_delta_l1": 0.15999826416373253,
+      "max_replay_logprob_error": 0.0,
+      "stochastic_turns": 8,
+      "sample_segments": 24,
+      "trainable_tokens": 4648,
+      "weight_version": 1
+    },
+    {
+      "step": 1,
+      "outcomes": [
+        {
+          "step": 1,
+          "agent": "cc",
+          "profile": "intuitive",
+          "seed": 0,
+          "reward": 1.0,
+          "trial_id": "7b915a78b9724931887c8574fed418b1",
+          "status": "completed",
+          "segments": 3,
+          "image_turns": 2
+        },
+        {
+          "step": 1,
+          "agent": "cc",
+          "profile": "intuitive",
+          "seed": 1,
+          "reward": 0.0,
+          "trial_id": "f76deea30e704d99b7a7298d7adf35b3",
+          "status": "completed",
+          "segments": 2,
+          "image_turns": 1
+        },
+        {
+          "step": 1,
+          "agent": "cc",
+          "profile": "expert",
+          "seed": 0,
+          "reward": 1.0,
+          "trial_id": "66d716b5dac7460b972fd9ed1480f0cc",
+          "status": "completed",
+          "segments": 4,
+          "image_turns": 3
+        },
+        {
+          "step": 1,
+          "agent": "cc",
+          "profile": "expert",
+          "seed": 1,
+          "reward": 0.0,
+          "trial_id": "0b47dd86c0364fdd912f3e2b598d82f6",
+          "status": "completed",
+          "segments": 3,
+          "image_turns": 2
+        },
+        {
+          "step": 1,
+          "agent": "dsh",
+          "profile": "intuitive",
+          "seed": 0,
+          "reward": 1.0,
+          "trial_id": "d48f8999c91a45479c4ac45ba9cd877f",
+          "status": "completed",
+          "segments": 3,
+          "image_turns": 2
+        },
+        {
+          "step": 1,
+          "agent": "dsh",
+          "profile": "intuitive",
+          "seed": 1,
+          "reward": 0.0,
+          "trial_id": "355b8ff1432f409fb0a2a9731e05838a",
+          "status": "completed",
+          "segments": 2,
+          "image_turns": 1
+        },
+        {
+          "step": 1,
+          "agent": "dsh",
+          "profile": "expert",
+          "seed": 0,
+          "reward": 1.0,
+          "trial_id": "f03005f4dc1e4dbaad30fbbfc5bac316",
+          "status": "completed",
+          "segments": 4,
+          "image_turns": 3
+        },
+        {
+          "step": 1,
+          "agent": "dsh",
+          "profile": "expert",
+          "seed": 1,
+          "reward": 0.0,
+          "trial_id": "536703a522414e39af180ba5e9bbf225",
+          "status": "completed",
+          "segments": 3,
+          "image_turns": 2
+        }
+      ],
+      "loss": -0.1421365886926651,
+      "grad_norm": 0.0027746171690523624,
+      "vision_grad_norm": 0.002259099157527089,
+      "parameter_delta_l1": 0.16014910116791725,
+      "max_replay_logprob_error": 0.0,
+      "stochastic_turns": 8,
+      "sample_segments": 24,
+      "trainable_tokens": 4648,
+      "weight_version": 2
+    }
+  ]
+}
