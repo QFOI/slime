@@ -50,18 +50,26 @@ The first run had **eight recovered CUDA allocator OOM warnings**; the resumed r
 
 Run inside a compatible prepared Linux GPU runtime with two visible GPUs, Docker access, the robot sandbox image, OSMesa and Bubblewrap. Set `session_python` in a copy of the YAML if simulation dependencies use a separate environment. Launching directly in the outer scheduler's unrelated Python environment is not equivalent.
 
+The current launcher defaults to **no checkpoints and no large tensor dumps**, following the user's later memory-saving requirement. The commands below explicitly opt into the historical save/recovery validation; they are not the current default and are not being rerun.
+
 ```bash
 export ROBOT_HF_CHECKPOINT=/models/Qwen3.5-0.8B
 export ROBOT_TRAIN_CONFIG="$PWD/examples/robotics/configs/training-smoke.yaml"
 export ROBOT_TRAIN_OUTPUT=/runs/robotics-first
 export ROBOT_TRAIN_STEPS=4
 bash examples/robotics/train.sh \
+  --save "$ROBOT_TRAIN_OUTPUT/checkpoints" --save-interval 1 \
+  --save-debug-rollout-data "$ROBOT_TRAIN_OUTPUT/rollout-{rollout_id}.pt" \
+  --save-debug-train-data "$ROBOT_TRAIN_OUTPUT/train-{rollout_id}.pt" \
   --rollout-max-response-len 1024 --eval-max-response-len 1024 \
   --eval-interval 2 --entropy-coef 0.001 --weight-decay 0
 
 # --num-rollout is the total target count, not the number of additional updates.
 ROBOT_TRAIN_OUTPUT=/runs/robotics-resumed ROBOT_TRAIN_STEPS=8 \
   bash examples/robotics/train.sh \
+  --save /runs/robotics-resumed/checkpoints --save-interval 1 \
+  --save-debug-rollout-data '/runs/robotics-resumed/rollout-{rollout_id}.pt' \
+  --save-debug-train-data '/runs/robotics-resumed/train-{rollout_id}.pt' \
   --load /runs/robotics-first/checkpoints \
   --use-checkpoint-opt-param-scheduler \
   --rollout-max-response-len 1024 --eval-max-response-len 1024 \

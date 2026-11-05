@@ -111,5 +111,9 @@
     "LD_LIBRARY_PATH_PREFIX": "/usr/local/cuda/compat:/usr/local/nvidia/lib64"
   },
   "scope": "TP4 training runtime; frozen evaluation ran before the CUDA library-order correction",
-  "full_training_validation": "pending: four updates observed, final save/eval not yet validated"
+  "full_training_validation": "four optimizer updates completed; checkpoint saving and final evaluation cancelled by user; no training checkpoints retained",
+  "current_launcher_defaults": {
+    "save_checkpoint": false,
+    "save_debug_tensors": false
+  }
 }

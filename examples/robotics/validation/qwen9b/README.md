@@ -4,9 +4,10 @@
 `c202236235762e1c871ad0ccb60c8ee5ba337b9a`，9,653,104,368 参数，BF16。
 四个 safetensors 分片均按 Hugging Face LFS SHA256 校验；未量化、未使用外部 API。
 
-**当前验收状态：冻结评测已完成，完整训练验收仍在进行。** 两次尝试分别完成了四次 TP=4 更新，
-但一次最终保存 GPU OOM、另一次保存期间运行环境重建，均无有效 checkpoint。
-同一镜像已恢复，正在从原始权重重新运行；下文不把这些失败尝试算作连续续训或成功保存。
+**当前状态：24 条冻结评测完成，最后一次运行完成四次 TP=4 更新，已按用户要求停止保存并释放资源。**
+此前两次尝试也各完成四次更新，但一次最终保存 GPU OOM、另一次保存期间运行环境重建。
+这些尝试都从原始权重开始，不能当作连续 12 步训练。没有保留 9B 训练 checkpoint，
+不再执行恢复或训练后评测；当前 launcher 默认关闭 checkpoint 和大型张量导出。
 
 ## 冻结模型短预算评测
 
@@ -86,7 +87,7 @@ CLI context/output 上限应与 SGLang 和 YAML 一致；harness 自身也可能
 复现短预算实验时用 `training-smoke.yaml` 的副本，设置 repeats=4、concurrency=2，
 服务与 CLI 改为 context=16384、output=1024，其余保持上述模型与采样设置。
 
-## 训练配置
+## 当前训练启动配置（不保存）
 
 ```bash
 export ROBOT_MODEL_PRESET=qwen3.5-9B
@@ -97,14 +98,28 @@ export ROBOT_TRAIN_STEPS=4
 export ROBOT_TRAIN_CONFIG="$PWD/examples/robotics/configs/training-smoke.yaml"
 export ROBOT_TRAIN_OUTPUT=/runs/qwen9b-training
 bash examples/robotics/train.sh --sequence-parallel \
-  --distrib-optim-fully-reshardable-mem-efficient \
   --rollout-max-response-len 1024 --eval-max-response-len 1024 \
-  --entropy-coef 0.001 --weight-decay 0 --eval-interval 4 --save-interval 4
+  --entropy-coef 0.001 --weight-decay 0 --eval-interval 4
 ```
 
 actor TP=4、rollout TP=1，共 5 张 H20。GRPO 每组 4 个 episode，microbatch=1，lr=1e-6，
 逐层 full recomputation、logprob chunk=128。每个 manifest row 更新一次，覆盖四种组合。
-这里只在最终更新保存 checkpoint；9B 的模型与 optimizer checkpoint 较大。
+当前命令不保存 checkpoint 或大型训练张量。下列历史测试曾显式保存，
+用户要求取消后已停止；不要把历史保存行为视为当前默认设置。
+
+## 最后一次训练与用户停止
+
+[training-stopped.json](training-stopped.json) 保留最后一次运行的四次更新指标和 16 条 episode 结果。
+四次梯度范数为 0.00825518、0.00613684、0.01344781、0.00705696；PG loss 均为 0，
+非零梯度来自 entropy=0.001，weight_decay=0。不能据此宣称机器人能力通过 RL 提升。
+保存阶段的容器主机内存快照为 489.5 GiB（并非峰值）。用户随后明确要求不保存、释放内存，
+因此停止该训练容器，没有继续重跑。Docker stop 发出信号后曾暂未收到退出事件，
+随后确认容器退出 137、OOMKilled=false；五张 GPU 均为 0 MiB / 0% utilization。
+共删除 132,167,245,859 字节的本轮训练 checkpoint 文件，保留日志和脱敏证据。
+该运行有 8 条 allocator 重试警告、没有致命 CUDA OOM；由于主动停止，
+没有训练后评测，也没有 checkpoint 恢复验收。冻结评测结果与这次训练分开统计。
+
+## 历史保存故障与运行环境修复
 
 一次完整四步训练曾在最终 optimizer checkpoint 汇总时 OOM，详见
 [checkpoint-failed-attempt.json](checkpoint-failed-attempt.json)。Megatron 原默认汇总路径
@@ -112,7 +127,7 @@ actor TP=4、rollout TP=1，共 5 张 H20。GRPO 每组 4 个 episode，microbat
 后续从预训练模型重新开始，不把这四次更新当作连续续训。另一次运行显式追加
 `--distrib-optim-fully-reshardable-mem-efficient`，通过 CPU/Gloo 汇总完整 optimizer，
 没有使用 `--no-save-optim`。这会转而占用较多主机 RAM；必须检查实际容器/任务的内存配额，
-不能仅依据宿主机 free RAM。该选项由上述 9B 命令显式设置，未改成所有模型的默认行为。
+不能仅依据宿主机 free RAM。当前不再设置这些保存选项。
 
 CPU/Gloo 尝试曾在四次更新后的 checkpoint 写盘期间遇到运行环境重建，详见
 [interrupted-training.json](interrupted-training.json)。四组训练共有 16 个 episode、101 个采样段、

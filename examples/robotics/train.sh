@@ -36,7 +36,6 @@ ROBOT_TRAIN_COMMAND=(
   "${MODEL_ARGS[@]}"
   --train-backend megatron
   --hf-checkpoint "$ROBOT_HF_CHECKPOINT" --load "$ROBOT_HF_CHECKPOINT"
-  --save "$ROBOT_TRAIN_OUTPUT/checkpoints" --save-interval 1
   --actor-num-nodes 1 --actor-num-gpus-per-node "$ROBOT_ACTOR_GPUS"
   --rollout-num-gpus "$ROBOT_ROLLOUT_GPUS" --rollout-num-gpus-per-engine 1 --num-gpus-per-node "$ROBOT_TOTAL_GPUS"
   --tensor-model-parallel-size "$ROBOT_TENSOR_PARALLEL_SIZE" --pipeline-model-parallel-size 1
@@ -62,9 +61,9 @@ ROBOT_TRAIN_COMMAND=(
   --eval-interval 1 --skip-eval-before-train
   --eval-prompt-data robotics "$ROBOT_TRAIN_OUTPUT/tasks.jsonl"
   --n-samples-per-eval-prompt 1 --eval-max-response-len 2048
-  --save-debug-rollout-data "$ROBOT_TRAIN_OUTPUT/rollout-{rollout_id}.pt"
-  --save-debug-train-data "$ROBOT_TRAIN_OUTPUT/train-{rollout_id}.pt"
 )
+# Keep smoke runs free of checkpoint gathering and large tensor dumps. Users
+# can explicitly append standard slime --save/--save-interval or debug flags.
 if [[ "${1:-}" == "--dry-run" ]]; then
   printf '%q ' "${ROBOT_TRAIN_COMMAND[@]}"
   printf '\n'

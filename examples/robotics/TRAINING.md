@@ -6,7 +6,7 @@
 
 这是训练链路验收：任务 reward 和 GRPO advantage 均为 0，非零梯度来自显式配置的 entropy coefficient 0.001；没有证明机器人能力提升。DSH 专家 PTC 已开启，但该 0.8B 模型未成功执行 PTC 子调用。显存分配重试警告也仍存在，不能宣称无 OOM 警告。早期 CPU 测试单独保留在 [CPU validation](validation/training/README.md)。
 
-另已测试 **Qwen3.5-9B**：24 条冻结模型评测完成；五张 H20（actor TP=4、rollout=1）完成四次参数更新，但最终 checkpoint 保存期间 Raylet 异常退出，集群控制接口同时失联。9B 的完整保存、恢复和训练后评测仍未验收。扩展预算评测有 5/8 物理成功、2/8 严格成功，详见 [9B 实测记录](validation/qwen9b/README.md)。
+另已测试 **Qwen3.5-9B**：24 条冻结模型评测完成；五张 H20（actor TP=4、rollout=1）的最后一次运行完成四次参数更新。用户随后明确要求不保存、释放内存，因此保存阶段被主动停止，训练 checkpoint 已删除，五张 GPU 显存均回到 0 MiB。9B 的恢复和训练后评测未完成；不再为此重跑。扩展预算评测有 5/8 物理成功、2/8 严格成功，详见 [9B 实测记录](validation/qwen9b/README.md)。
 
 ## 两条模型路径
 
@@ -56,9 +56,11 @@
 
 提供 [train.sh](train.sh)，使用当前 slime 原生 Qwen3.5 VL provider。默认是 Qwen3.5-0.8B、单机两张 GPU（actor 1、rollout 1）、GRPO、每组 4 个 episode、microbatch=1、3 个 rollout 更新。完整四种组合的快速检查使用 [training-smoke.yaml](configs/training-smoke.yaml) 和 `ROBOT_TRAIN_STEPS=4`。组内 reward 相同则 GRPO 优势为 0；不承诺 0.8B 模型会完成任务。
 
+**默认不保存模型/optimizer checkpoint，也不导出大型 rollout/train 张量。** launcher 不设置 `--save`、`--save-interval`、`--save-debug-rollout-data` 或 `--save-debug-train-data`，不会因最后一轮而自动保存。保留轻量指标和机器人 episode 记录。历史 0.8B 的 checkpoint 验收对应旧的显式保存配置，不代表当前默认行为。
+
 脚本默认启用逐层 full recomputation、`--log-probs-chunk-size 128` 和 `SLIME_ENABLE_EXPANDABLE_SEGMENTS=1`。这些设置已随恢复作业验证，但长图像历史仍可能引起显存回收重试；本次只验收了 H20，未验证更小显存的 GPU。
 
-9B 在原 NCCL optimizer 汇总路径下虽然完成了四次更新，保存时仍因额外申请约 14.6 GiB 显存而 OOM；只降低训练 microbatch 不能消除这类保存峰值。另一次显式追加 `--distrib-optim-fully-reshardable-mem-efficient`，使用 CPU/Gloo 汇总完整 optimizer，在写盘期间遇到 Raylet 退出，未得到有效 checkpoint。该选项需要足够的实际进程/容器内存配额并保持 `enable_gloo_process_groups=true`；宿主机 free RAM 不能代替 cgroup 配额。它仍是待验收的排障配置，**没有设为 launcher 默认值**，也没有用 `--no-save-optim` 掩盖保存问题。
+历史 9B 保存测试中，NCCL optimizer 汇总额外申请约 14.6 GiB 显存并 OOM；另用 `--distrib-optim-fully-reshardable-mem-efficient` 转到 CPU/Gloo，保存期间训练容器的主机内存快照达到 489.5 GiB（不是峰值测量）。最终按用户要求停止，取消 checkpoint 验收。这两个保存路径都不由当前 launcher 默认触发。
 
 在已安装 slime GPU 训练依赖的 Linux 环境运行。不要在 GPU 训练环境照搬评测 README 的 CPU torch 安装命令。依赖沿用 slime 的 Megatron/SGLang/CUDA 组合，另安装固定 robot-rollout runtime、OSMesa、Bubblewrap，并准备 `slime-robotics:0.1` Docker 镜像。运行机器人会话的 Ray worker 必须能够启动 Docker、访问任务目录和相同 HF processor。
 
@@ -99,7 +101,7 @@ bash examples/robotics/train.sh
 
 ## 保存、恢复与验收范围
 
-checkpoint 保存模型、Adam 状态、随机数、scheduler 和数据 cursor。`--num-rollout` 是总更新数；从 4 次更新延长到 8 次时，应显式沿用 checkpoint 的 scheduler，避免 Megatron 因推导出的调度长度变化而拒绝恢复：
+以下说明只适用于已存在的历史 checkpoint，当前默认不创建 checkpoint。完整 checkpoint 包括模型、Adam 状态、随机数、scheduler 和数据 cursor。`--num-rollout` 是总更新数；从 4 次更新延长到 8 次时，应显式沿用 checkpoint 的 scheduler，避免 Megatron 因推导出的调度长度变化而拒绝恢复：
 
 ```bash
 ROBOT_TRAIN_OUTPUT=/runs/robotics-resumed ROBOT_TRAIN_STEPS=8 \
