@@ -65,7 +65,8 @@ def execute():
     execute_train(
         train_args=f"{rollout_args} {sglang_args} {misc_args}",
         num_gpus_per_node=NUM_GPUS,
-        megatron_model_type=f"{MODEL_NAME.lower()}-vl",
+        # scripts/models/qwen3.5-4B-vl.sh: only the leading letter is lower case.
+        megatron_model_type=f"{MODEL_NAME[0].lower()}{MODEL_NAME[1:]}-vl",
     )
 
 
