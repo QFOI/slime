@@ -32,7 +32,7 @@ from .task import HarborTask, read_reward
 
 
 @asynccontextmanager
-async def robot_session(task: HarborTask, profile: str, directory: Path, timeout: float):
+async def robot_session(task: HarborTask, profile: str, directory: Path, timeout: float, python: str | None = None):
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         port = sock.getsockname()[1]
@@ -62,7 +62,7 @@ async def robot_session(task: HarborTask, profile: str, directory: Path, timeout
     with (directory / "session.log").open("wb") as log:
         try:
             process = await asyncio.create_subprocess_exec(
-                sys.executable,
+                python or sys.executable,
                 "-m",
                 "examples.robotics.session",
                 "--config",
@@ -109,6 +109,18 @@ async def verify(task: HarborTask, image: str, directory: Path, profile: str) ->
         return read_reward(target)
 
 
+def cc_budget_exhausted(event: dict) -> bool:
+    return event.get("subtype") in {"error_max_turns", "error_max_budget_usd"} or (
+        event.get("terminal_reason") == "blocking_limit"
+    )
+
+
+def dsh_budget_exhausted(result: dict) -> bool:
+    return result.get("status") in {"model_request_limit", "timeout"} or (
+        (result.get("turn_end") or {}).get("kind") == "max-tokens" and result.get("exit_code") == 0
+    )
+
+
 def cc_result(path: Path) -> dict:
     results = []
     for line in path.read_text().splitlines():
@@ -118,7 +130,7 @@ def cc_result(path: Path) -> dict:
             continue
         if event.get("type") == "result":
             results.append(event)
-    if not results or results[-1].get("is_error"):
+    if not results or (results[-1].get("is_error") and not cc_budget_exhausted(results[-1])):
         raise RuntimeError("CC did not produce a successful final result event")
     return results[-1]
 
@@ -140,7 +152,9 @@ async def run_episode(
         "run_dir": str(directory),
     }
     try:
-        async with robot_session(task, profile, directory, experiment.startup_timeout_sec) as (mcp, freeze):
+        async with robot_session(
+            task, profile, directory, experiment.startup_timeout_sec, experiment.session_python
+        ) as (mcp, freeze):
             cfg = episode_config(experiment, agent=agent, profile=profile, instruction=task.instruction, mcp=mcp)
             limit = (
                 min(experiment.max_model_requests, cfg.dsh.max_model_requests)
@@ -189,23 +203,35 @@ async def run_episode(
                     await sb.copy_out("/workspace/.harness", directory / "agent")
                     if getattr(gateway, "error", None):
                         raise RuntimeError(gateway.error)
-                    if (
+                    budget_exhausted = (
                         exit_code == EXIT_TIME_BUDGET_EXCEEDED
                         or gateway.limit_reached
                         or metrics.get("compact_limit_reached")
-                    ):
+                    )
+                    cc_final = {}
+                    if agent == "cc" and not budget_exhausted and exit_code in (0, 1):
+                        cc_final = cc_result(directory / "agent/trajectory.jsonl")
+                        # Official CC exits 1 for turn, context or cost budgets.
+                        # Keep sampled turns and independently verify the frozen
+                        # robot state; other CLI errors remain fatal.
+                        budget_exhausted = cc_budget_exhausted(cc_final)
+                    dsh_final = {}
+                    if agent == "dsh":
+                        records = list((directory / "agent/dsh").glob("*/result.json"))
+                        if len(records) == 1:
+                            dsh_final = json.loads(records[0].read_text())
+                            result["dsh_versions"] = dsh_final.get("dsh_versions")
+                            budget_exhausted = budget_exhausted or dsh_budget_exhausted(dsh_final)
+                    if budget_exhausted:
                         result["status"] = "truncated"
                     elif exit_code:
                         raise RuntimeError(f"Agent execution failed with exit {exit_code}")
                     elif agent == "cc":
-                        result["response"] = cc_result(directory / "agent/trajectory.jsonl").get("result", "")
+                        result["response"] = cc_final.get("result", "")
                     elif not metrics.get("completed"):
                         raise RuntimeError("DSH did not persist a completed turn")
                     else:
-                        records = list((directory / "agent/dsh").glob("*/result.json"))
-                        dsh_result = json.loads(records[0].read_text())
-                        result["response"] = dsh_result.get("final_text", "")
-                        result["dsh_versions"] = dsh_result.get("dsh_versions")
+                        result["response"] = dsh_final.get("final_text", "")
         # Agent and robot are stopped. No tool can modify evidence during judging.
         result["rewards"] = await verify(task, experiment.image, directory, profile)
         result["reward"] = result["rewards"]["reward"]

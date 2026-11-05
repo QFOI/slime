@@ -20,6 +20,8 @@ def inspect(config, checkpoint, required_gpus):
     gpus = torch.cuda.device_count()
     if gpus < required_gpus:
         failures.append(f"Need {required_gpus} local CUDA GPUs; found {gpus}")
+    if cfg.session_python and not Path(cfg.session_python).is_file():
+        failures.append("session_python must point to an existing simulation Python interpreter")
     packages = {}
     for package, module in (
         ("ray", "ray"),
@@ -55,6 +57,7 @@ def inspect(config, checkpoint, required_gpus):
         "torch": torch.__version__,
         "packages": packages,
         "robot_image_available": image_ok,
+        "session_python": cfg.session_python,
         "failures": failures,
     }
 

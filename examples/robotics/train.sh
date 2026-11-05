@@ -13,6 +13,8 @@ mkdir -p "$ROBOT_TRAIN_OUTPUT"
 export ROBOTICS_CONFIG="$ROBOT_TRAIN_CONFIG"
 export TOKENIZERS_PARALLELISM=false
 export CUDA_DEVICE_MAX_CONNECTIONS=1
+# Image histories vary in length; avoid retaining incompatible allocation sizes.
+export SLIME_ENABLE_EXPANDABLE_SEGMENTS="${SLIME_ENABLE_EXPANDABLE_SEGMENTS:-1}"
 
 # Reuse the upstream native language-model dimensions, with its native VL wrapper.
 source scripts/models/qwen3.5-0.8B.sh
@@ -31,6 +33,8 @@ ROBOT_TRAIN_COMMAND=(
   --tensor-model-parallel-size 1 --pipeline-model-parallel-size 1
   --context-parallel-size 1 --expert-model-parallel-size 1 --expert-tensor-parallel-size 1
   --micro-batch-size 1
+  --recompute-granularity full --recompute-method uniform --recompute-num-layers 1
+  --log-probs-chunk-size 128
   --attention-dropout 0 --hidden-dropout 0
   --accumulate-allreduce-grads-in-fp32 --attention-softmax-in-fp32 --attention-backend flash
   --prompt-data "$ROBOT_TRAIN_OUTPUT/tasks.jsonl" --input-key prompt --metadata-key metadata

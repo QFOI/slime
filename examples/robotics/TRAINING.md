@@ -2,7 +2,9 @@
 
 原迁移仅支持评测。现在增加 CC / DSH → slime SGLang actor → 多模态 `Sample` → slime `BatchBuilder` / GRPO 的训练接入，保留原外部 API 评测行为。
 
-**验收边界：尚未通过完整 GPU Megatron/SGLang 联训验收。** hy-stem 当前没有 CUDA GPU 和 Megatron；Qwen3.5-0.8B 权重已准备。CPU harness/梯度测试与真实 HF VLM 张量测试分别验证数据链路和反向传播，不验证 GPU 内核、分布式训练或 Megatron→SGLang 权重同步。验证结果见 [training validation](validation/training/README.md)。
+**已在两张 H20 上完成真实 GPU 训练与 checkpoint 恢复。** 使用预训练 Qwen3.5-0.8B，在 Panda Reach 上完成 CC/DSH × intuitive/expert 共 8 次 Megatron optimizer 更新（首次 4 次、恢复后 4 次），包含图像训练、权重同步、三轮周期评测和 checkpoint 保存。详细版本与数据见 [GPU validation](validation/gpu-training/README.md)。
+
+这是训练链路验收：任务 reward 和 GRPO advantage 均为 0，非零梯度来自显式配置的 entropy coefficient 0.001；没有证明机器人能力提升。DSH 专家 PTC 已开启，但该 0.8B 模型未成功执行 PTC 子调用。显存分配重试警告也仍存在，不能宣称无 OOM 警告。早期 CPU 测试单独保留在 [CPU validation](validation/training/README.md)。
 
 ## 两条模型路径
 
@@ -50,7 +52,9 @@
 
 ## GPU 启动配置
 
-提供 [train.sh](train.sh)，使用当前 slime 原生 Qwen3.5 VL provider。默认是 Qwen3.5-0.8B、单机两张 GPU（actor 1、rollout 1）、GRPO、每组 4 个 episode、microbatch=1、3 个 rollout 更新。此配置是待 GPU 验收的启动配方，不承诺 0.8B 模型会完成机器人任务。组内 reward 相同则 GRPO 优势为 0，是正常现象。
+提供 [train.sh](train.sh)，使用当前 slime 原生 Qwen3.5 VL provider。默认是 Qwen3.5-0.8B、单机两张 GPU（actor 1、rollout 1）、GRPO、每组 4 个 episode、microbatch=1、3 个 rollout 更新。完整四种组合的快速检查使用 [training-smoke.yaml](configs/training-smoke.yaml) 和 `ROBOT_TRAIN_STEPS=4`。组内 reward 相同则 GRPO 优势为 0；不承诺 0.8B 模型会完成任务。
+
+脚本默认启用逐层 full recomputation、`--log-probs-chunk-size 128` 和 `SLIME_ENABLE_EXPANDABLE_SEGMENTS=1`。这些设置已随恢复作业验证，但长图像历史仍可能引起显存回收重试；本次只验收了 H20，未验证更小显存的 GPU。
 
 在已安装 slime GPU 训练依赖的 Linux 环境运行。不要在 GPU 训练环境照搬评测 README 的 CPU torch 安装命令。依赖沿用 slime 的 Megatron/SGLang/CUDA 组合，另安装固定 robot-rollout runtime、OSMesa、Bubblewrap，并准备 `slime-robotics:0.1` Docker 镜像。运行机器人会话的 Ray worker 必须能够启动 Docker、访问任务目录和相同 HF processor。
 
@@ -73,11 +77,23 @@ bash examples/robotics/train.sh
 
 训练模板默认不启用 score centering、MoE routing replay 或 speculative decoding，便于先检查主链路。可用这些特性的完整 actor/serving 组合需要单独验收，不能仅凭字段已透传就声称通过。
 
-## 仍须在 GPU 验收的项目
+当 GPU 训练栈需要 NumPy 2，而固定的仿真依赖需要 NumPy 1.26 时，可以在 YAML 顶层指定 `session_python: /path/to/sim-venv/bin/python`。只有独立的机器人/MCP 进程使用该解释器；模型、processor、训练与推理仍使用 GPU 环境。相对路径以 YAML 所在目录解析。仿真环境需安装 `robot-rollout[sim]`、MCP、uvicorn，并能导入当前 slime checkout。默认不设置时沿用当前解释器。
 
-- 官方 SGLang 使用真实 Qwen3.5 权重生成工具调用并接收 MCP 图像；HF/SGLang 图像处理及采样 logprob 对齐。
-- CC、DSH 的两个 profile 均经 `train.py` 完成非零梯度的 Megatron optimizer step。
-- 更新后的 actor 权重同步回 SGLang，再生成下一批机器人轨迹。
-- 至少一次周期 eval、checkpoint 保存与恢复；无 NaN/OOM、图片/序列错位。
+## 保存、恢复与验收范围
 
-这些项目没有完成前，本分支应视为训练接入候选版本。
+checkpoint 保存模型、Adam 状态、随机数、scheduler 和数据 cursor。`--num-rollout` 是总更新数；从 4 次更新延长到 8 次时，应显式沿用 checkpoint 的 scheduler，避免 Megatron 因推导出的调度长度变化而拒绝恢复：
+
+```bash
+ROBOT_TRAIN_OUTPUT=/runs/robotics-resumed ROBOT_TRAIN_STEPS=8 \
+  bash examples/robotics/train.sh \
+  --load /runs/robotics-first/checkpoints \
+  --use-checkpoint-opt-param-scheduler \
+  --entropy-coef 0.001 --weight-decay 0 \
+  --rollout-max-response-len 1024 --eval-max-response-len 1024
+```
+
+这里的 entropy/weight-decay 参数用于复现 GPU smoke，脚本的常规默认值仍分别是 0 和 0.1。不要用 `--finetune`、`--no-load-optim` 或 `--no-load-rng` 代替完整恢复。非恒定学习率的实验应事先设计调度长度；沿用旧 schedule 不等于自动延长它。
+
+已验证单机 TP=PP=CP=1 的真实 SGLang → harness → robot → 多模态 Sample → Megatron 更新 → 权重同步 → checkpoint 恢复。图像、token 和有限 logprob 检查通过，但 SGLang 与训练 BF16 logprob 并非逐位相等。真实任务失败、模型工具语法错误与正常预算截断保留为有效失败轨迹；基础设施错误在训练和训练期 eval 中均报错。
+
+尚未验收多机模型训练、TP/PP/CP>1、Lift 的 GPU 训练、真机在线训练、compaction/multiagent 或分数提升。具体结果和已知限制以 [GPU validation](validation/gpu-training/README.md) 为准。

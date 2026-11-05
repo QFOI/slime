@@ -18,6 +18,11 @@ def get_packed_cp_local_indices(
     indices = []
     for start, end in zip(boundaries[:-1], boundaries[1:], strict=True):
         sequence_length = end - start
+        if cp_size == 1:
+            # Without context parallelism Megatron keeps the entire sequence;
+            # odd token counts do not need two-chunk CP padding.
+            indices.append(torch.arange(start, end, device=device))
+            continue
         if sequence_length % (2 * cp_size) != 0:
             raise ValueError(f"Packed sequence length {sequence_length} must be divisible by 2 * CP size {cp_size}")
         chunk_size = sequence_length // (2 * cp_size)

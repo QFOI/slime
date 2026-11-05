@@ -79,6 +79,19 @@ def test_thd_cp_indices_select_two_chunks_per_packed_sequence():
 
 
 @pytest.mark.unit
+@pytest.mark.parametrize("boundaries", [[0, 3461], [0, 5, 12], [0, 8, 16]])
+def test_without_cp_preserves_every_token_including_odd_sequences(boundaries):
+    indices = get_packed_cp_local_indices(boundaries, cp_size=1, cp_rank=0, device=torch.device("cpu"))
+    assert indices.tolist() == list(range(boundaries[-1]))
+
+
+@pytest.mark.unit
+def test_distributed_cp_still_requires_padded_sequences():
+    with pytest.raises(ValueError, match="divisible"):
+        get_packed_cp_local_indices([0, 7], cp_size=2, cp_rank=0, device=torch.device("cpu"))
+
+
+@pytest.mark.unit
 def test_raw_qkv_loader_is_inverse_of_exporter():
     hidden_size = 3
     q = torch.arange(16 * hidden_size).reshape(16, hidden_size)

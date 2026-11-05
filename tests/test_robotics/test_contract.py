@@ -26,6 +26,19 @@ def test_harbor_is_the_only_task_source(task_dir):
     assert task.digest != HarborTask.load(task_dir).digest
 
 
+def test_session_interpreter_resolves_relative_to_yaml(tmp_path):
+    base = tmp_path / "base-python"
+    base.touch()
+    executable = tmp_path / "sim-venv/bin/python"
+    executable.parent.mkdir(parents=True)
+    executable.symlink_to(base)
+    config = tmp_path / "training.yaml"
+    config.write_text("tasks: [task]\nsession_python: sim-venv/bin/python\n")
+    cfg = load_experiment(config)
+    assert cfg.session_python == str(executable)
+    assert Experiment(tasks=["task"]).session_python is None
+
+
 def test_harbor_rejects_escaping_package(task_dir, tmp_path):
     (tmp_path / "secret").write_text("not part of the task")
     (task_dir / "environment/link").symlink_to(tmp_path / "secret")

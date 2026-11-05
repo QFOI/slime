@@ -178,13 +178,16 @@ class TrainingGateway:
                 self.error = f"Training adapter {type(exc).__name__}: {exc}"
                 return web.json_response({"error": {"message": self.error}}, status=500)
 
-    def samples(self, base, result):
+    def validate_result(self, result):
         if self.error or result["status"] not in {"completed", "truncated"} or "reward" not in result:
             raise RuntimeError(
                 f"Robot training episode failed ({result['trial_id']}): {result.get('error', self.error)}"
             )
         if not self.turns:
             raise RuntimeError("Robot training episode produced no sampled tokens")
+
+    def samples(self, base, result):
+        self.validate_result(result)
         rid = base.rollout_id if base.rollout_id is not None else base.index
         if rid is None:
             raise ValueError("slime must assign an index or rollout_id before robotics generation")

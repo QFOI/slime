@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from importlib.resources import files
 from pathlib import Path
 from typing import Literal
@@ -28,6 +29,7 @@ class Experiment(BaseModel):
     repeats: int = Field(default=1, gt=0)
     concurrency: int = Field(default=1, gt=0)
     image: str = "slime-robotics:0.1"
+    session_python: str | None = None
     output_dir: str = "runs"
     startup_timeout_sec: float = Field(default=180, gt=0)
     max_model_requests: int = Field(default=60, gt=0)
@@ -53,6 +55,9 @@ def load_experiment(path: str | Path) -> Experiment:
     cfg = Experiment.model_validate(yaml.safe_load(path.read_text()))
     cfg.tasks = [str((path.parent / p).resolve()) for p in cfg.tasks]
     cfg.output_dir = str((path.parent / cfg.output_dir).resolve())
+    if cfg.session_python is not None:
+        # Resolving the executable symlink would discard the virtualenv prefix.
+        cfg.session_python = os.path.abspath(path.parent / Path(cfg.session_python).expanduser())
     prompt = cfg.runtime.prompt
     for field in ("user_file", "system_file", "append_file"):
         if value := getattr(prompt, field):

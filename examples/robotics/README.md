@@ -3,7 +3,7 @@
 Harbor 任务包 → 独立机器人会话 → 官方 CC / DSH → 冻结状态 → 独立 Harbor verifier → slime `Sample`。
 支持外部 API 评测，以及接到 slime 所管理 SGLang actor 的多模态训练样本生成。CLI 使用 slime 原生的 `BaseHarness` 和 `Sandbox` 接口，任务代码与训练核心分离。
 
-训练使用独立的 [training.yaml](configs/training.yaml) 和 [训练说明](TRAINING.md)。完整 GPU Megatron/SGLang 联训尚未在 hy-stem 验收；不能把已有 rollout 成功或 CPU 梯度检查当成 GPU 联训成功。
+训练使用独立的 [training.yaml](configs/training.yaml) 和 [训练说明](TRAINING.md)。两张 H20 上已完成 Qwen3.5-0.8B 的 8 次真实更新、权重同步和 checkpoint 恢复；这是训练链路验收，任务分数仍为 0。详见 [GPU 验证报告](validation/gpu-training/README.md)。
 
 ## 固定版本与来源
 

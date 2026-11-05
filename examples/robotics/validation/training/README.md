@@ -1,6 +1,6 @@
 # hy-stem training integration validation — 2026-11-04
 
-**CPU training integration passed. Full GPU Megatron/SGLang training remains unverified.**
+**Historical CPU validation: CPU training integration passed.** Subsequent real GPU training and checkpoint recovery are documented in the [GPU validation report](../gpu-training/README.md). The results below remain CPU-only evidence.
 
 The host has no CUDA GPU and runs PyTorch `2.6.0+cpu`; Megatron is absent. The complete Qwen3.5-0.8B checkpoint has been staged on shared storage. [preflight.json](preflight.json) records the remaining resource/runtime failures. Do not treat these CPU results as a pretrained robot policy benchmark or as evidence that GPU training, weight synchronization or checkpoint recovery works.
 
@@ -53,4 +53,4 @@ python -m tests.test_robotics.hf_vision_smoke --processor /path/to/Qwen3.5-0.8B
 bash examples/robotics/train.sh --dry-run
 ```
 
-See [TRAINING.md](../../TRAINING.md) for the GPU launch recipe and remaining acceptance criteria. No external API credential is needed for these training integration tests.
+See [TRAINING.md](../../TRAINING.md) for the GPU launch recipe and current validation scope. No external API credential is needed for these training integration tests.

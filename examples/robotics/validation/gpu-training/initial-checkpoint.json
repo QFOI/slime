@@ -1,0 +1,48 @@
+{
+  "iteration": 3,
+  "tensors": {
+    "model.visual.patch_embed.proj.weight": {
+      "elements": 1179648,
+      "model_l1_change_from_hf": 0.3370843827724457,
+      "model_changed_elements": 136007,
+      "master_l1_change_from_hf": 1.9159128665924072,
+      "adam_exp_avg_l1": 0.12393620610237122
+    },
+    "model.visual.merger.linear_fc2.bias": {
+      "elements": 1024,
+      "model_l1_change_from_hf": 9.000301361083984e-05,
+      "model_changed_elements": 31,
+      "master_l1_change_from_hf": 0.0021129855886101723,
+      "adam_exp_avg_l1": 2.6380854251328856e-05
+    },
+    "language_model.decoder.final_layernorm.weight": {
+      "elements": 1024,
+      "model_l1_change_from_hf": 0.0,
+      "model_changed_elements": 0,
+      "master_l1_change_from_hf": 0.0029282569885253906,
+      "adam_exp_avg_l1": 4.426739542395808e-05
+    }
+  },
+  "rng_metadata_entries": 1,
+  "scheduler": {
+    "max_lr": 1e-06,
+    "lr_warmup_steps": 0,
+    "num_steps": 16,
+    "lr_decay_style": "constant",
+    "lr_decay_steps": 16,
+    "min_lr": 0.0,
+    "start_wd": 0.0,
+    "end_wd": 0.0,
+    "wd_incr_style": "constant",
+    "wd_incr_steps": 16
+  },
+  "dataset_cursor": {
+    "sample_offset": 4,
+    "epoch_id": 0,
+    "sample_group_index": 4,
+    "sample_index": 16
+  },
+  "optimizer_common_keys": [
+    "param_groups"
+  ]
+}

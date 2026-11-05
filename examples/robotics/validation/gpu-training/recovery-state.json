@@ -1,0 +1,37 @@
+{
+  "loaded_iteration": 3,
+  "first_resumed_update": 4,
+  "last_resumed_update": 7,
+  "exit_code": 0,
+  "settings": {
+    "finetune": "False",
+    "no_load_optim": "None",
+    "no_load_rng": "None",
+    "use_checkpoint_opt_param_scheduler": "True",
+    "recompute_granularity": "full",
+    "recompute_method": "uniform",
+    "recompute_num_layers": "1"
+  },
+  "before": {
+    "iteration": 3,
+    "dataset_cursor": {
+      "sample_offset": 4,
+      "epoch_id": 0,
+      "sample_group_index": 4,
+      "sample_index": 16
+    },
+    "optimizer_tensor_keys": 1311,
+    "rng_metadata_entries": 1
+  },
+  "after": {
+    "iteration": 7,
+    "dataset_cursor": {
+      "sample_offset": 4,
+      "epoch_id": 1,
+      "sample_group_index": 8,
+      "sample_index": 32
+    },
+    "optimizer_tensor_keys": 1311,
+    "rng_metadata_entries": 1
+  }
+}

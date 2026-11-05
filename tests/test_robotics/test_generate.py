@@ -108,3 +108,30 @@ def test_slime_eval_disabled_top_k_maps_to_external_api_none(monkeypatch):
             SimpleNamespace(robotics_config=ROOT / "configs/robotics.yaml"), sample, {"top_k": -1}, evaluation=True
         )
     )
+
+
+@pytest.mark.parametrize("status", ["aborted", "completed", "truncated"])
+def test_training_eval_does_not_disguise_infrastructure_failure_as_zero(monkeypatch, status):
+    from examples.robotics import training
+
+    class Gateway(training.TrainingGateway):
+        def __init__(self, *_args, **_kwargs):
+            self.error = None
+            self.turns = [object()]
+
+    async def run(*_args, **_kwargs):
+        if status == "aborted":
+            return {"trial_id": "trial", "status": status, "error": "harness failed"}
+        return {"trial_id": "trial", "status": status, "reward": 0.0}
+
+    monkeypatch.setattr(training, "TrainingGateway", Gateway)
+    monkeypatch.setattr(module, "run_episode", run)
+    sample = Sample(index=0, **HarborTask.load(ROOT / "tasks/panda-reach").row())
+    invocation = module.generate(
+        SimpleNamespace(robotics_config=ROOT / "configs/training.yaml"), sample, {}, evaluation=True
+    )
+    if status == "aborted":
+        with pytest.raises(RuntimeError, match="harness failed"):
+            asyncio.run(invocation)
+    else:
+        assert asyncio.run(invocation)[0].reward == 0

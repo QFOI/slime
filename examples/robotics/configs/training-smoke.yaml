@@ -1,0 +1,31 @@
+# Four manifest rows: CC/DSH x intuitive/expert on the same public Reach task.
+# Use ROBOT_TRAIN_STEPS=4 to train every row once (four episodes per row).
+tasks: [../tasks/panda-reach]
+agents: [cc, dsh]
+profiles: [intuitive, expert]
+training:
+  enabled: true
+image: slime-robotics:0.1
+output_dir: ../runs/training-smoke/episodes
+max_model_requests: 8
+# If sim dependencies need a separate venv, set session_python here.
+runtime:
+  prompt:
+    user: Complete the task using the available tools and verify the physical result.
+  claude:
+    expected_version: 2.1.296
+    max_turns: 8
+    context_window: 16384
+    max_output_tokens: 1024
+    thinking_budget: 0
+    compaction: {enabled: false, threshold_pct: 70, max_compactions: 0}
+    multiagent: {enabled: false}
+  dsh:
+    expected_version: 0.1.0-rc.6
+    acp_version: 0.1.0-rc.6
+    context_window: 16384
+    max_model_requests: 8
+    max_output_tokens: 1024
+    compaction_enabled: false
+  run:
+    timeout_sec: 240

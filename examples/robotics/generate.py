@@ -51,6 +51,7 @@ async def generate(args, sample: Sample, sampling_params: dict, evaluation: bool
         result = await run_episode(cfg, task, agent=agent, profile=profile, model_gateway=gateway)
         if not evaluation:
             return gateway.samples(sample, result)
+        gateway.validate_result(result)
     else:
         result = await run_episode(cfg, task, agent=agent, profile=profile)
     sample.tokens, sample.response_length, sample.loss_mask, sample.rollout_log_probs = [0, 0], 1, [0], [0.0]
