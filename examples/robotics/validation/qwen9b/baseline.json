@@ -1,0 +1,1045 @@
+{
+  "model": "Qwen/Qwen3.5-9B",
+  "model_revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+  "sampling": {
+    "temperature": 0.8,
+    "top_p": 1.0,
+    "top_k": -1,
+    "max_new_tokens": 1024
+  },
+  "episodes": 16,
+  "elapsed_sec": 320.1945097569842,
+  "prompt_sha256": {
+    "intuitive": "8c715791e9f231e31f17228d88a4e8a9690704ec45e2e6c34379f87b50f750c4",
+    "expert": "2fb34c2c136ea10b36f3693fd2b7d1b00fc3d063dd3b873355f5972e3bec8a99"
+  },
+  "context_length": 16384,
+  "max_model_requests": 8,
+  "timeout_sec": 240,
+  "compaction": false,
+  "multiagent": false,
+  "exit_code": 0,
+  "cases": [
+    {
+      "case_index": 0,
+      "repeat": 0,
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "cc",
+      "profile": "intuitive",
+      "status": "truncated",
+      "reward": 0.0,
+      "rewards": {
+        "reward": 0.0,
+        "physical_success": 0.0,
+        "depth_programs": 0.0
+      },
+      "model_requests": 6,
+      "elapsed_sec": 37.305,
+      "cc_version": "2.1.296 (Claude Code)",
+      "agent_metrics": {
+        "compact_count": 0,
+        "compact_attempts": 0,
+        "compact_limit_reached": 0
+      },
+      "sampled_turns": [
+        {
+          "prompt_tokens": 1810,
+          "output_tokens": 67,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 1930,
+          "output_tokens": 31,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 3223,
+          "output_tokens": 1024,
+          "image_count": 2,
+          "ill_formed": false,
+          "finish_reason": "length"
+        },
+        {
+          "prompt_tokens": 4296,
+          "output_tokens": 1024,
+          "image_count": 2,
+          "ill_formed": false,
+          "finish_reason": "length"
+        },
+        {
+          "prompt_tokens": 5368,
+          "output_tokens": 148,
+          "image_count": 2,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 7299,
+          "output_tokens": 672,
+          "image_count": 4,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        }
+      ]
+    },
+    {
+      "case_index": 1,
+      "repeat": 1,
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "cc",
+      "profile": "intuitive",
+      "status": "truncated",
+      "reward": 0.0,
+      "rewards": {
+        "reward": 0.0,
+        "physical_success": 0.0,
+        "depth_programs": 0.0
+      },
+      "model_requests": 6,
+      "elapsed_sec": 37.339,
+      "cc_version": "2.1.296 (Claude Code)",
+      "agent_metrics": {
+        "compact_count": 0,
+        "compact_attempts": 0,
+        "compact_limit_reached": 0
+      },
+      "sampled_turns": [
+        {
+          "prompt_tokens": 1810,
+          "output_tokens": 75,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 1938,
+          "output_tokens": 42,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 3243,
+          "output_tokens": 1024,
+          "image_count": 2,
+          "ill_formed": false,
+          "finish_reason": "length"
+        },
+        {
+          "prompt_tokens": 4316,
+          "output_tokens": 246,
+          "image_count": 2,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 6348,
+          "output_tokens": 747,
+          "image_count": 4,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 8880,
+          "output_tokens": 583,
+          "image_count": 6,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        }
+      ]
+    },
+    {
+      "case_index": 2,
+      "repeat": 2,
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "cc",
+      "profile": "intuitive",
+      "status": "truncated",
+      "reward": 0.0,
+      "rewards": {
+        "reward": 0.0,
+        "physical_success": 0.0,
+        "depth_programs": 0.0
+      },
+      "model_requests": 6,
+      "elapsed_sec": 36.917,
+      "cc_version": "2.1.296 (Claude Code)",
+      "agent_metrics": {
+        "compact_count": 0,
+        "compact_attempts": 0,
+        "compact_limit_reached": 0
+      },
+      "sampled_turns": [
+        {
+          "prompt_tokens": 1810,
+          "output_tokens": 59,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 1922,
+          "output_tokens": 32,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 3219,
+          "output_tokens": 1024,
+          "image_count": 2,
+          "ill_formed": false,
+          "finish_reason": "length"
+        },
+        {
+          "prompt_tokens": 4292,
+          "output_tokens": 348,
+          "image_count": 2,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 6428,
+          "output_tokens": 1024,
+          "image_count": 4,
+          "ill_formed": false,
+          "finish_reason": "length"
+        },
+        {
+          "prompt_tokens": 7501,
+          "output_tokens": 167,
+          "image_count": 4,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        }
+      ]
+    },
+    {
+      "case_index": 3,
+      "repeat": 3,
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "cc",
+      "profile": "intuitive",
+      "status": "completed",
+      "reward": 0.0,
+      "rewards": {
+        "reward": 0.0,
+        "physical_success": 0.0,
+        "depth_programs": 0.0
+      },
+      "model_requests": 6,
+      "elapsed_sec": 31.794,
+      "cc_version": "2.1.296 (Claude Code)",
+      "agent_metrics": {
+        "compact_count": 0,
+        "compact_attempts": 0,
+        "compact_limit_reached": 0
+      },
+      "sampled_turns": [
+        {
+          "prompt_tokens": 1810,
+          "output_tokens": 59,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 1922,
+          "output_tokens": 32,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 3218,
+          "output_tokens": 1024,
+          "image_count": 2,
+          "ill_formed": false,
+          "finish_reason": "length"
+        },
+        {
+          "prompt_tokens": 4291,
+          "output_tokens": 153,
+          "image_count": 2,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 6229,
+          "output_tokens": 164,
+          "image_count": 4,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 7656,
+          "output_tokens": 564,
+          "image_count": 6,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        }
+      ]
+    },
+    {
+      "case_index": 4,
+      "repeat": 0,
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "cc",
+      "profile": "expert",
+      "status": "truncated",
+      "reward": 0.0,
+      "rewards": {
+        "reward": 0.0,
+        "physical_success": 0.0,
+        "depth_programs": 0.0
+      },
+      "model_requests": 8,
+      "elapsed_sec": 21.135,
+      "cc_version": "2.1.296 (Claude Code)",
+      "agent_metrics": {
+        "compact_count": 0,
+        "compact_attempts": 0,
+        "compact_limit_reached": 0
+      },
+      "sampled_turns": [
+        {
+          "prompt_tokens": 5803,
+          "output_tokens": 64,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 5920,
+          "output_tokens": 50,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 6107,
+          "output_tokens": 46,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 6210,
+          "output_tokens": 43,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 6306,
+          "output_tokens": 45,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 6404,
+          "output_tokens": 58,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 7070,
+          "output_tokens": 61,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 8824,
+          "output_tokens": 1024,
+          "image_count": 1,
+          "ill_formed": false,
+          "finish_reason": "length"
+        }
+      ]
+    },
+    {
+      "case_index": 5,
+      "repeat": 1,
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "cc",
+      "profile": "expert",
+      "status": "truncated",
+      "reward": 0.0,
+      "rewards": {
+        "reward": 0.0,
+        "physical_success": 1.0,
+        "depth_programs": 0.0
+      },
+      "model_requests": 6,
+      "elapsed_sec": 26.42,
+      "cc_version": "2.1.296 (Claude Code)",
+      "agent_metrics": {
+        "compact_count": 0,
+        "compact_attempts": 0,
+        "compact_limit_reached": 0
+      },
+      "sampled_turns": [
+        {
+          "prompt_tokens": 5803,
+          "output_tokens": 33,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 5889,
+          "output_tokens": 58,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 6600,
+          "output_tokens": 71,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 8363,
+          "output_tokens": 938,
+          "image_count": 1,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 9609,
+          "output_tokens": 239,
+          "image_count": 1,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 11411,
+          "output_tokens": 195,
+          "image_count": 1,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        }
+      ]
+    },
+    {
+      "case_index": 6,
+      "repeat": 2,
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "cc",
+      "profile": "expert",
+      "status": "truncated",
+      "reward": 0.0,
+      "rewards": {
+        "reward": 0.0,
+        "physical_success": 1.0,
+        "depth_programs": 0.0
+      },
+      "model_requests": 5,
+      "elapsed_sec": 16.316,
+      "cc_version": "2.1.296 (Claude Code)",
+      "agent_metrics": {
+        "compact_count": 0,
+        "compact_attempts": 0,
+        "compact_limit_reached": 0
+      },
+      "sampled_turns": [
+        {
+          "prompt_tokens": 5803,
+          "output_tokens": 59,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 5915,
+          "output_tokens": 57,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 6627,
+          "output_tokens": 71,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 8394,
+          "output_tokens": 377,
+          "image_count": 1,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 10334,
+          "output_tokens": 185,
+          "image_count": 1,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        }
+      ]
+    },
+    {
+      "case_index": 7,
+      "repeat": 3,
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "cc",
+      "profile": "expert",
+      "status": "truncated",
+      "reward": 0.0,
+      "rewards": {
+        "reward": 0.0,
+        "physical_success": 0.0,
+        "depth_programs": 0.0
+      },
+      "model_requests": 7,
+      "elapsed_sec": 42.172,
+      "cc_version": "2.1.296 (Claude Code)",
+      "agent_metrics": {
+        "compact_count": 0,
+        "compact_attempts": 0,
+        "compact_limit_reached": 0
+      },
+      "sampled_turns": [
+        {
+          "prompt_tokens": 5803,
+          "output_tokens": 58,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 5914,
+          "output_tokens": 67,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 6600,
+          "output_tokens": 68,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 8365,
+          "output_tokens": 1024,
+          "image_count": 1,
+          "ill_formed": false,
+          "finish_reason": "length"
+        },
+        {
+          "prompt_tokens": 9459,
+          "output_tokens": 923,
+          "image_count": 1,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 10579,
+          "output_tokens": 1024,
+          "image_count": 1,
+          "ill_formed": false,
+          "finish_reason": "length"
+        },
+        {
+          "prompt_tokens": 11652,
+          "output_tokens": 405,
+          "image_count": 1,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        }
+      ]
+    },
+    {
+      "case_index": 8,
+      "repeat": 0,
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "dsh",
+      "profile": "intuitive",
+      "status": "truncated",
+      "reward": 0.0,
+      "rewards": {
+        "reward": 0.0,
+        "physical_success": 0.0,
+        "depth_programs": 0.0
+      },
+      "model_requests": 4,
+      "elapsed_sec": 37.17,
+      "dsh_versions": {
+        "dsh": "0.1.0-rc.6",
+        "dsh-acp": "0.1.0-rc.6",
+        "verified_dsh_packages": 187,
+        "package_lock_sha256": "8bb1b6852a4b994cbd7e3a643c879cdc7c982f99119f0e2b0265fc42f5e85a17"
+      },
+      "agent_metrics": {
+        "completed": 0,
+        "ptc_subcalls": 0,
+        "ptc_successful_subcalls": 0
+      },
+      "sampled_turns": [
+        {
+          "prompt_tokens": 1653,
+          "output_tokens": 66,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 1712,
+          "output_tokens": 33,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 1768,
+          "output_tokens": 18,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 3930,
+          "output_tokens": 1024,
+          "image_count": 2,
+          "ill_formed": false,
+          "finish_reason": "length"
+        }
+      ]
+    },
+    {
+      "case_index": 9,
+      "repeat": 1,
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "dsh",
+      "profile": "intuitive",
+      "status": "truncated",
+      "reward": 0.0,
+      "rewards": {
+        "reward": 0.0,
+        "physical_success": 0.0,
+        "depth_programs": 0.0
+      },
+      "model_requests": 3,
+      "elapsed_sec": 37.026,
+      "dsh_versions": {
+        "dsh": "0.1.0-rc.6",
+        "dsh-acp": "0.1.0-rc.6",
+        "verified_dsh_packages": 187,
+        "package_lock_sha256": "8bb1b6852a4b994cbd7e3a643c879cdc7c982f99119f0e2b0265fc42f5e85a17"
+      },
+      "agent_metrics": {
+        "completed": 0,
+        "ptc_subcalls": 0,
+        "ptc_successful_subcalls": 0
+      },
+      "sampled_turns": [
+        {
+          "prompt_tokens": 1653,
+          "output_tokens": 60,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 1709,
+          "output_tokens": 18,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 3875,
+          "output_tokens": 1024,
+          "image_count": 2,
+          "ill_formed": false,
+          "finish_reason": "length"
+        }
+      ]
+    },
+    {
+      "case_index": 10,
+      "repeat": 2,
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "dsh",
+      "profile": "intuitive",
+      "status": "truncated",
+      "reward": 0.0,
+      "rewards": {
+        "reward": 0.0,
+        "physical_success": 0.0,
+        "depth_programs": 0.0
+      },
+      "model_requests": 3,
+      "elapsed_sec": 36.943,
+      "dsh_versions": {
+        "dsh": "0.1.0-rc.6",
+        "dsh-acp": "0.1.0-rc.6",
+        "verified_dsh_packages": 187,
+        "package_lock_sha256": "8bb1b6852a4b994cbd7e3a643c879cdc7c982f99119f0e2b0265fc42f5e85a17"
+      },
+      "agent_metrics": {
+        "completed": 0,
+        "ptc_subcalls": 0,
+        "ptc_successful_subcalls": 0
+      },
+      "sampled_turns": [
+        {
+          "prompt_tokens": 1653,
+          "output_tokens": 57,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 1709,
+          "output_tokens": 32,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 3881,
+          "output_tokens": 1024,
+          "image_count": 2,
+          "ill_formed": false,
+          "finish_reason": "length"
+        }
+      ]
+    },
+    {
+      "case_index": 11,
+      "repeat": 3,
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "dsh",
+      "profile": "intuitive",
+      "status": "truncated",
+      "reward": 0.0,
+      "rewards": {
+        "reward": 0.0,
+        "physical_success": 0.0,
+        "depth_programs": 0.0
+      },
+      "model_requests": 3,
+      "elapsed_sec": 36.884,
+      "dsh_versions": {
+        "dsh": "0.1.0-rc.6",
+        "dsh-acp": "0.1.0-rc.6",
+        "verified_dsh_packages": 187,
+        "package_lock_sha256": "8bb1b6852a4b994cbd7e3a643c879cdc7c982f99119f0e2b0265fc42f5e85a17"
+      },
+      "agent_metrics": {
+        "completed": 0,
+        "ptc_subcalls": 0,
+        "ptc_successful_subcalls": 0
+      },
+      "sampled_turns": [
+        {
+          "prompt_tokens": 1653,
+          "output_tokens": 66,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 1709,
+          "output_tokens": 18,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 3881,
+          "output_tokens": 1024,
+          "image_count": 2,
+          "ill_formed": false,
+          "finish_reason": "length"
+        }
+      ]
+    },
+    {
+      "case_index": 12,
+      "repeat": 0,
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "dsh",
+      "profile": "expert",
+      "status": "truncated",
+      "reward": 0.0,
+      "rewards": {
+        "reward": 0.0,
+        "physical_success": 0.0,
+        "depth_programs": 0.0
+      },
+      "model_requests": 2,
+      "elapsed_sec": 32.053,
+      "dsh_versions": {
+        "dsh": "0.1.0-rc.6",
+        "dsh-acp": "0.1.0-rc.6",
+        "verified_dsh_packages": 187,
+        "package_lock_sha256": "8bb1b6852a4b994cbd7e3a643c879cdc7c982f99119f0e2b0265fc42f5e85a17"
+      },
+      "agent_metrics": {
+        "completed": 0,
+        "ptc_subcalls": 1,
+        "ptc_successful_subcalls": 1
+      },
+      "sampled_turns": [
+        {
+          "prompt_tokens": 6824,
+          "output_tokens": 191,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 12965,
+          "output_tokens": 1,
+          "image_count": 2,
+          "ill_formed": false,
+          "finish_reason": "length"
+        }
+      ]
+    },
+    {
+      "case_index": 13,
+      "repeat": 1,
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "dsh",
+      "profile": "expert",
+      "status": "truncated",
+      "reward": 0.0,
+      "rewards": {
+        "reward": 0.0,
+        "physical_success": 0.0,
+        "depth_programs": 0.0
+      },
+      "model_requests": 8,
+      "elapsed_sec": 77.661,
+      "dsh_versions": {
+        "dsh": "0.1.0-rc.6",
+        "dsh-acp": "0.1.0-rc.6",
+        "verified_dsh_packages": 187,
+        "package_lock_sha256": "8bb1b6852a4b994cbd7e3a643c879cdc7c982f99119f0e2b0265fc42f5e85a17"
+      },
+      "agent_metrics": {
+        "completed": 0,
+        "ptc_subcalls": 0,
+        "ptc_successful_subcalls": 0
+      },
+      "sampled_turns": [
+        {
+          "prompt_tokens": 6824,
+          "output_tokens": 1024,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "length"
+        },
+        {
+          "prompt_tokens": 7887,
+          "output_tokens": 1024,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "length"
+        },
+        {
+          "prompt_tokens": 8950,
+          "output_tokens": 839,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 9813,
+          "output_tokens": 167,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 9971,
+          "output_tokens": 730,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 10725,
+          "output_tokens": 703,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 11452,
+          "output_tokens": 620,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 12096,
+          "output_tokens": 619,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        }
+      ]
+    },
+    {
+      "case_index": 14,
+      "repeat": 2,
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "dsh",
+      "profile": "expert",
+      "status": "truncated",
+      "reward": 0.0,
+      "rewards": {
+        "reward": 0.0,
+        "physical_success": 0.0,
+        "depth_programs": 0.0
+      },
+      "model_requests": 2,
+      "elapsed_sec": 26.643,
+      "dsh_versions": {
+        "dsh": "0.1.0-rc.6",
+        "dsh-acp": "0.1.0-rc.6",
+        "verified_dsh_packages": 187,
+        "package_lock_sha256": "8bb1b6852a4b994cbd7e3a643c879cdc7c982f99119f0e2b0265fc42f5e85a17"
+      },
+      "agent_metrics": {
+        "completed": 0,
+        "ptc_subcalls": 1,
+        "ptc_successful_subcalls": 1
+      },
+      "sampled_turns": [
+        {
+          "prompt_tokens": 6824,
+          "output_tokens": 149,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "stop"
+        },
+        {
+          "prompt_tokens": 14699,
+          "output_tokens": 1,
+          "image_count": 2,
+          "ill_formed": false,
+          "finish_reason": "length"
+        }
+      ]
+    },
+    {
+      "case_index": 15,
+      "repeat": 3,
+      "task": "panda-reach",
+      "task_digest": "743f4da02460daad65be72a1196293a293dce9c45f2d5e20263ef008abed5016",
+      "agent": "dsh",
+      "profile": "expert",
+      "status": "truncated",
+      "reward": 0.0,
+      "rewards": {
+        "reward": 0.0,
+        "physical_success": 0.0,
+        "depth_programs": 0.0
+      },
+      "model_requests": 8,
+      "elapsed_sec": 72.839,
+      "dsh_versions": {
+        "dsh": "0.1.0-rc.6",
+        "dsh-acp": "0.1.0-rc.6",
+        "verified_dsh_packages": 187,
+        "package_lock_sha256": "8bb1b6852a4b994cbd7e3a643c879cdc7c982f99119f0e2b0265fc42f5e85a17"
+      },
+      "agent_metrics": {
+        "completed": 0,
+        "ptc_subcalls": 0,
+        "ptc_successful_subcalls": 0
+      },
+      "sampled_turns": [
+        {
+          "prompt_tokens": 6824,
+          "output_tokens": 1024,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "length"
+        },
+        {
+          "prompt_tokens": 7854,
+          "output_tokens": 1024,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "length"
+        },
+        {
+          "prompt_tokens": 8917,
+          "output_tokens": 1024,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "length"
+        },
+        {
+          "prompt_tokens": 9980,
+          "output_tokens": 1024,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "length"
+        },
+        {
+          "prompt_tokens": 11027,
+          "output_tokens": 1024,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "length"
+        },
+        {
+          "prompt_tokens": 12090,
+          "output_tokens": 497,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "length"
+        },
+        {
+          "prompt_tokens": 12613,
+          "output_tokens": 44,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "length"
+        },
+        {
+          "prompt_tokens": 12682,
+          "output_tokens": 7,
+          "image_count": 0,
+          "ill_formed": false,
+          "finish_reason": "length"
+        }
+      ]
+    }
+  ]
+}

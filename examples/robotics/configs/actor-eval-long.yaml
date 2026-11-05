@@ -1,0 +1,30 @@
+# Frozen actor evaluation with a larger context/output budget; no optimizer.
+tasks: [../tasks/panda-reach]
+agents: [cc, dsh]
+profiles: [intuitive, expert]
+repeats: 2
+concurrency: 2
+training:
+  enabled: true
+image: slime-robotics:0.1
+max_model_requests: 16
+runtime:
+  prompt:
+    user: Complete the task using the available tools and verify the physical result.
+  claude:
+    expected_version: 2.1.296
+    max_turns: 16
+    context_window: 65536
+    max_output_tokens: 4096
+    thinking_budget: 0
+    compaction: {enabled: false, threshold_pct: 70, max_compactions: 0}
+    multiagent: {enabled: false}
+  dsh:
+    expected_version: 0.1.0-rc.6
+    acp_version: 0.1.0-rc.6
+    context_window: 65536
+    max_model_requests: 16
+    max_output_tokens: 4096
+    compaction_enabled: false
+  run:
+    timeout_sec: 600

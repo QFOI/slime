@@ -6,6 +6,8 @@
 
 这是训练链路验收：任务 reward 和 GRPO advantage 均为 0，非零梯度来自显式配置的 entropy coefficient 0.001；没有证明机器人能力提升。DSH 专家 PTC 已开启，但该 0.8B 模型未成功执行 PTC 子调用。显存分配重试警告也仍存在，不能宣称无 OOM 警告。早期 CPU 测试单独保留在 [CPU validation](validation/training/README.md)。
 
+另已测试 **Qwen3.5-9B**：24 条冻结模型评测完成；五张 H20（actor TP=4、rollout=1）完成四次参数更新，但最终 checkpoint 保存期间 Raylet 异常退出，集群控制接口同时失联。9B 的完整保存、恢复和训练后评测仍未验收。扩展预算评测有 5/8 物理成功、2/8 严格成功，详见 [9B 实测记录](validation/qwen9b/README.md)。
+
 ## 两条模型路径
 
 | 设置 | 模型来源 | 返回的数据 |
@@ -56,6 +58,8 @@
 
 脚本默认启用逐层 full recomputation、`--log-probs-chunk-size 128` 和 `SLIME_ENABLE_EXPANDABLE_SEGMENTS=1`。这些设置已随恢复作业验证，但长图像历史仍可能引起显存回收重试；本次只验收了 H20，未验证更小显存的 GPU。
 
+9B 在原 NCCL optimizer 汇总路径下虽然完成了四次更新，保存时仍因额外申请约 14.6 GiB 显存而 OOM；只降低训练 microbatch 不能消除这类保存峰值。另一次显式追加 `--distrib-optim-fully-reshardable-mem-efficient`，使用 CPU/Gloo 汇总完整 optimizer，在写盘期间遇到 Raylet 退出，未得到有效 checkpoint。该选项需要足够的实际进程/容器内存配额并保持 `enable_gloo_process_groups=true`；宿主机 free RAM 不能代替 cgroup 配额。它仍是待验收的排障配置，**没有设为 launcher 默认值**，也没有用 `--no-save-optim` 掩盖保存问题。
+
 在已安装 slime GPU 训练依赖的 Linux 环境运行。不要在 GPU 训练环境照搬评测 README 的 CPU torch 安装命令。依赖沿用 slime 的 Megatron/SGLang/CUDA 组合，另安装固定 robot-rollout runtime、OSMesa、Bubblewrap，并准备 `slime-robotics:0.1` Docker 镜像。运行机器人会话的 Ray worker 必须能够启动 Docker、访问任务目录和相同 HF processor。
 
 本 fork 的根 `docker/Dockerfile` 默认 SGLang image 为 `v0.5.21`，Megatron 源码为 `4b4acac9a1d28ea6829c8d4f566d75698a21249d`，并应用 slime 自带补丁。应以这套 GPU runtime 为起点。CPU 验证环境安装的 SGLang `0.5.9` 只用于调用官方 tool parser，**不是 GPU 训练依赖锁**；预检只检查基础资源/文件/包存在性，不能替代 GPU runtime ABI 与模型兼容验证。
@@ -74,6 +78,20 @@ bash examples/robotics/train.sh
 ```
 
 `ROBOT_PYTHON` 可选解释器，`ROBOT_TRAIN_STEPS` 可修改更新数；脚本末尾可追加标准 slime CLI 参数。脚本使用当前 Ray 配置，不执行 `ray stop`、`pkill` 或自动替换依赖。自定义多机部署应根据 slime 的集群配置自行设置节点与共享目录；本脚本的预检和资源配置针对单机。
+
+较大模型可通过同一个 launcher 选择官方 dense Qwen3.5 preset：
+
+| 环境变量 | 默认 | 含义 |
+|---|---|---|
+| `ROBOT_MODEL_PRESET` | `qwen3.5-0.8B` | 支持 `qwen3.5-0.8B`、`qwen3.5-4B`、`qwen3.5-9B`，加载对应 upstream 层数/维度 |
+| `ROBOT_HF_CHECKPOINT` | `/models/Qwen3.5-0.8B` | 默认路径随 preset 改变；自定义权重必须匹配该 preset 的架构 |
+| `ROBOT_ACTOR_GPUS` | `1` | 单节点训练 GPU 数 |
+| `ROBOT_ROLLOUT_GPUS` | `1` | rollout GPU 数，每个 SGLang engine 仍使用一张卡 |
+| `ROBOT_TENSOR_PARALLEL_SIZE` | 等于 actor GPU 数 | actor 的 tensor parallel 大小 |
+
+9B 的冻结模型评测、扩大预算的对照、TP=4 训练配置与兼容性记录见
+[Qwen3.5-9B validation](validation/qwen9b/README.md)。4B 有架构 preset，但尚未实测。
+9B 使用 actor=4、rollout=1，并追加 `--sequence-parallel`；脚本不按模型名称隐式开启它。
 
 训练模板默认不启用 score centering、MoE routing replay 或 speculative decoding，便于先检查主链路。可用这些特性的完整 actor/serving 组合需要单独验收，不能仅凭字段已透传就声称通过。
 
@@ -96,4 +114,4 @@ ROBOT_TRAIN_OUTPUT=/runs/robotics-resumed ROBOT_TRAIN_STEPS=8 \
 
 已验证单机 TP=PP=CP=1 的真实 SGLang → harness → robot → 多模态 Sample → Megatron 更新 → 权重同步 → checkpoint 恢复。图像、token 和有限 logprob 检查通过，但 SGLang 与训练 BF16 logprob 并非逐位相等。真实任务失败、模型工具语法错误与正常预算截断保留为有效失败轨迹；基础设施错误在训练和训练期 eval 中均报错。
 
-尚未验收多机模型训练、TP/PP/CP>1、Lift 的 GPU 训练、真机在线训练、compaction/multiagent 或分数提升。具体结果和已知限制以 [GPU validation](validation/gpu-training/README.md) 为准。
+9B 单机 TP=4 的采样、反向传播和权重同步已实际运行，但完整 checkpoint 生命周期未通过。尚未验收多机模型训练、PP/CP>1、Lift 的 GPU 训练、真机在线训练、compaction/multiagent 或分数提升。完整 0.8B 验收见 [GPU validation](validation/gpu-training/README.md)，9B 的结果和故障见 [9B validation](validation/qwen9b/README.md)。

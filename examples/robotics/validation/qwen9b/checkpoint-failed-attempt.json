@@ -1,0 +1,77 @@
+{
+  "phase": "checkpoint optimizer-state gathering after four successful optimizer updates",
+  "exit_code": 1,
+  "optimizer_updates": [
+    {
+      "step": 0,
+      "metrics": {
+        "train/loss": -0.00012958442675881088,
+        "train/pg_loss": 0.0,
+        "train/entropy_loss": 0.1295843869447708,
+        "train/pg_clipfrac": 0.0,
+        "train/ppo_kl": 0.00024866985040716827,
+        "train/train_rollout_logprob_abs_diff": 0.006809459067881107,
+        "train/grad_norm": 0.006118610966950655,
+        "train/lr-pg_0": 1e-06,
+        "train/lr-pg_1": 1e-06,
+        "train/global_batch_size": 4,
+        "train/step": 0
+      }
+    },
+    {
+      "step": 1,
+      "metrics": {
+        "train/loss": -8.4256476839073e-05,
+        "train/pg_loss": 0.0,
+        "train/entropy_loss": 0.08425647765398026,
+        "train/pg_clipfrac": 0.0,
+        "train/ppo_kl": 8.389945287490264e-05,
+        "train/train_rollout_logprob_abs_diff": 0.004426207393407822,
+        "train/grad_norm": 0.005377797409892082,
+        "train/lr-pg_0": 1e-06,
+        "train/lr-pg_1": 1e-06,
+        "train/global_batch_size": 4,
+        "train/step": 1
+      }
+    },
+    {
+      "step": 2,
+      "metrics": {
+        "train/loss": -0.00014265492791309953,
+        "train/pg_loss": 0.0,
+        "train/entropy_loss": 0.1426549255847931,
+        "train/pg_clipfrac": 0.0,
+        "train/ppo_kl": 0.0007105408003553748,
+        "train/train_rollout_logprob_abs_diff": 0.006817806512117386,
+        "train/grad_norm": 0.00924593023955822,
+        "train/lr-pg_0": 1e-06,
+        "train/lr-pg_1": 1e-06,
+        "train/global_batch_size": 4,
+        "train/step": 2
+      }
+    },
+    {
+      "step": 3,
+      "metrics": {
+        "train/loss": -0.00011364153760951012,
+        "train/pg_loss": 0.0,
+        "train/entropy_loss": 0.11364153772592545,
+        "train/pg_clipfrac": 0.0,
+        "train/ppo_kl": -0.0010319333523511887,
+        "train/train_rollout_logprob_abs_diff": 0.00636261235922575,
+        "train/grad_norm": 0.008295545354485512,
+        "train/lr-pg_0": 1e-06,
+        "train/lr-pg_1": 1e-06,
+        "train/global_batch_size": 4,
+        "train/step": 3
+      }
+    }
+  ],
+  "valid_checkpoint": false,
+  "episodes": 16,
+  "allocator_retry_warnings": 16,
+  "requested_extra_gpu_gib": 14.56,
+  "gpu_free_gib_in_error": 7.66,
+  "fix": "--distrib-optim-fully-reshardable-mem-efficient (CPU/Gloo); full optimizer remains enabled",
+  "continuation": "Fresh run from pretrained weights; failed run is not a resumed policy"
+}
